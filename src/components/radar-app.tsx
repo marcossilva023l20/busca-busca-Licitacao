@@ -251,6 +251,45 @@ export function RadarApp() {
         </div>
 
         <div ref={resultsRef} className="mt-8 scroll-mt-56">
+          {/* Barra de pesquisa, ordenação e mostrar todos os resultados (fora do filtro) */}
+          <div className="glass mb-4 flex flex-wrap items-center gap-3 rounded-2xl p-3.5 shadow-xl shadow-black/30 sm:p-4">
+            <div className="relative min-w-[260px] flex-1">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-fog" />
+              <input
+                value={filters.q}
+                onChange={(e) => changeFilters({ ...filters, q: e.target.value })}
+                placeholder="Buscar por objeto, Itens, órgão ou palavra-chave… ex.: uniformes, ambulância, prefeitura"
+                className="h-11 w-full rounded-xl border border-line bg-ink-2/80 pl-10 pr-3.5 text-sm text-white placeholder:text-fog/55 transition-colors focus:border-signal/50"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-fog">
+                <ArrowUpDown className="h-3.5 w-3.5 text-signal" />
+                Ordenar por
+              </span>
+              <select
+                value={filters.sort}
+                onChange={(e) => changeFilters({ ...filters, sort: e.target.value as FilterState["sort"] })}
+                className="h-11 appearance-none rounded-xl border border-line bg-panel-2/90 px-3 text-sm text-mist transition-colors focus:border-signal/50"
+              >
+                <option value="encerramento_asc">Encerramento mais próximo</option>
+                <option value="encerramento_desc">Encerramento mais distante</option>
+                <option value="publicacao_desc">Publicação mais recente</option>
+                <option value="valor_desc">Maior valor estimado</option>
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleShowAll}
+              className="flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-signal/50 bg-signal/15 px-4 text-sm font-semibold text-lime-200 transition-colors hover:bg-signal/25"
+            >
+              <Layers className="h-4 w-4" />
+              Mostrar todos os resultados
+            </button>
+          </div>
+
           <ResultHeader result={result} loading={loading} onExport={exportCsv} />
           <ResultList
             result={result}

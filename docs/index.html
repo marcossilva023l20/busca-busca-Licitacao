@@ -92,16 +92,20 @@ main{padding-bottom:6rem}
 .dock-sticky{position:sticky;top:80px;z-index:30}
 .dock{border-radius:16px;padding:1rem;box-shadow:0 25px 50px -12px rgba(0,0,0,.4)}
 @media(min-width:640px){.dock{padding:1.25rem}}
-.search-row{position:relative}
+.search-row{position:relative;flex:1;min-width:260px}
 .search-row svg{position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:var(--fog);pointer-events:none}
-.search-row input{width:100%;height:48px;border-radius:12px;border:1px solid var(--line);background:rgba(9,13,18,.7);padding:0 1rem 0 2.75rem;font-size:15px;color:#fff;transition:.2s}
+.search-row input{width:100%;height:44px;border-radius:12px;border:1px solid var(--line);background:rgba(9,13,18,.8);padding:0 1rem 0 2.75rem;font-size:14.5px;color:#fff;transition:.2s}
 .search-row input::placeholder{color:rgba(139,152,169,.55)}
 .search-row input:focus{border-color:rgba(163,230,53,.5)}
+.results-toolbar{margin-bottom:1.25rem;display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;padding:.85rem 1rem;border-radius:14px;border:1px solid var(--line);background:rgba(17,23,34,.65);box-shadow:0 12px 30px -10px rgba(0,0,0,.35)}
+.results-toolbar .sort-wrap{display:flex;align-items:center;gap:.4rem;min-width:210px}
+.results-toolbar .btn-all-res{display:inline-flex;height:42px;align-items:center;justify-content:center;gap:.45rem;border-radius:10px;border:1px solid rgba(163,230,53,.5);background:rgba(163,230,53,.14);padding:0 1.1rem;font-size:13px;font-weight:600;color:#ecfccb;cursor:pointer;white-space:nowrap;transition:.2s}
+.results-toolbar .btn-all-res:hover{background:rgba(163,230,53,.24);border-color:rgba(163,230,53,.7);color:#fff}
 .grid2{margin-top:1rem;display:grid;grid-template-columns:1fr;gap:.75rem}
 @media(min-width:640px){.grid2{grid-template-columns:repeat(2,1fr)}}
 @media(min-width:1024px){.grid2{grid-template-columns:repeat(4,1fr)}}
 .grid3{margin-top:1rem;display:grid;grid-template-columns:1fr;gap:.75rem}
-@media(min-width:1024px){.grid3{grid-template-columns:4fr 3fr 3fr 2fr}}
+@media(min-width:768px){.grid3{grid-template-columns:1.8fr 1.2fr 1fr}}
 .flabel{margin-bottom:.4rem;display:flex;align-items:center;gap:.35rem;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--fog)}
 .flabel svg{color:rgba(163,230,53,.8)}
 .field{width:100%;height:40px;border-radius:9px;border:1px solid var(--line);background:rgba(17,23,34,.8);padding:0 .75rem;font-size:14px;color:var(--mist);transition:.2s}
@@ -372,6 +376,7 @@ footer .fb{border-top:1px solid rgba(28,37,48,.5);padding:1rem;text-align:center
   <div class="saved-bar" id="saved-bar"></div>
   <div class="dock-sticky"><div class="glass dock" id="dock"></div></div>
   <div class="results" id="results">
+    <div class="results-toolbar" id="results-toolbar"></div>
     <div class="rh" id="result-header"></div>
     <div id="grid-wrap">
       <div class="grid-cards" id="grid"></div>
@@ -747,8 +752,7 @@ function activeCount(){ return (F.q?1:0)+(F.uf?1:0)+(F.municipio?1:0)+F.modalida
 function renderDock(){
   const dock=$("#dock");
   dock.innerHTML=
-  '<div class="search-row">'+I.search+'<input id="f-q" type="text" placeholder="Buscar por objeto, órgão ou palavra-chave… ex.: uniformes, ambulância, prefeitura" value="'+esc(F.q)+'"></div>'+
-  '<div class="grid2">'+
+  '<div class="grid2" style="margin-top:0">'+
     '<div><p class="flabel">'+I.pin+'UF</p><select class="field" id="f-uf"><option value="">Todo o Brasil</option>'+UFS.map(u=>'<option value="'+u+'"'+(F.uf===u?" selected":"")+'>'+u+'</option>').join("")+'</select></div>'+
     '<div><p class="flabel">'+I.building+'Município</p><div class="ac" id="ac-mun"><input class="field" id="f-mun" placeholder="'+(F.uf?"Município em "+F.uf+"…":"Digite o município…")+'" value="'+esc(F.municipio)+'" autocomplete="off"><div class="glass ac-panel" id="ac-panel"></div></div></div>'+
     '<div><p class="flabel">'+I.layers+'Modalidade</p><div class="ms" id="ms-mod"></div></div>'+
@@ -759,29 +763,22 @@ function renderDock(){
       '<div class="date-row"><input class="field" type="date" id="f-de" value="'+F.encerramentoDe+'" aria-label="Encerramento a partir de"><span class="sep">até</span><input class="field" type="date" id="f-ate" value="'+F.encerramentoAte+'" aria-label="Encerramento até"></div>'+
       '<div class="presets" id="presets">'+PRESETS.map((p,i)=>'<button type="button" class="preset" data-i="'+i+'">'+p.label+'</button>').join("")+'</div></div>'+
     '<div><p class="flabel">'+I.dollar+'Valor estimado (R$)</p><div class="date-row"><input class="field" id="f-vmin" inputmode="numeric" placeholder="Mínimo" value="'+esc(F.valorMin)+'"><span class="sep">–</span><input class="field" id="f-vmax" inputmode="numeric" placeholder="Máximo" value="'+esc(F.valorMax)+'"></div></div>'+
-    '<div><p class="flabel">'+I.sort+'Ordenar por</p><select class="field" id="f-sort">'+
-      '<option value="encerramento_asc"'+(F.sort==="encerramento_asc"?" selected":"")+'>Encerramento mais próximo</option>'+
-      '<option value="encerramento_desc"'+(F.sort==="encerramento_desc"?" selected":"")+'>Encerramento mais distante</option>'+
-      '<option value="publicacao_desc"'+(F.sort==="publicacao_desc"?" selected":"")+'>Publicação mais recente</option>'+
-      '<option value="valor_desc"'+(F.sort==="valor_desc"?" selected":"")+'>Maior valor estimado</option></select></div>'+
-    '<div class="btn-row" style="flex-wrap:wrap"><button type="button" class="btn" style="flex:1.4;border-color:rgba(163,230,53,.45);color:#ecfccb;background:rgba(163,230,53,.12);font-weight:600" id="btn-all">'+I.layers+'Mostrar todos os resultados</button>'+
-    '<button type="button" class="btn btn-ghost" id="btn-clear" title="Limpar filtros">'+I.eraser+'Limpar'+(activeCount()?" ("+activeCount()+")":"")+'</button>'+
-    '<button type="button" class="btn btn-save" id="btn-save" title="Salvar esta combinação de filtros">'+I.bookmark+'Salvar</button></div>'+
+    '<div class="btn-row" style="flex-wrap:nowrap">'+
+      '<button type="button" class="btn btn-ghost" id="btn-clear" title="Limpar filtros">'+I.eraser+'Limpar'+(activeCount()?" ("+activeCount()+")":"")+'</button>'+
+      '<button type="button" class="btn btn-save" id="btn-save" title="Salvar esta combinação de filtros">'+I.bookmark+'Salvar</button>'+
+    '</div>'+
   '</div>';
 
   attachMultiSelect($("#ms-mod"),{placeholder:"Todas as modalidades",options:MODALIDADES.map(m=>({value:String(m.id),label:m.nome})),selected:F.modalidades.map(String),onChange:next=>setF({modalidades:next.map(Number)})});
   attachMultiSelect($("#ms-port"),{placeholder:"Todos os portais",options:PORTAIS.map(p=>({value:p.key,label:p.nome,color:p.cor})),selected:F.portais,onChange:next=>setF({portais:next})});
 
   let deb=null;
-  $("#f-q").addEventListener("input",e=>{ clearTimeout(deb); const v=e.target.value; deb=setTimeout(()=>setF({q:v}),450); });
   $("#f-uf").addEventListener("change",e=>{ const mi=$("#f-mun"); if(mi){ mi.value=""; mi.placeholder=e.target.value?("Município em "+e.target.value+"…"):"Digite o município…"; } setF({uf:e.target.value,municipio:""}); });
   $("#f-de").addEventListener("change",e=>setF({encerramentoDe:e.target.value}));
   $("#f-ate").addEventListener("change",e=>setF({encerramentoAte:e.target.value}));
   $("#f-vmin").addEventListener("input",e=>{ clearTimeout(deb); const v=e.target.value.replace(/[^\d]/g,""); deb=setTimeout(()=>setF({valorMin:v}),450); });
   $("#f-vmax").addEventListener("input",e=>{ clearTimeout(deb); const v=e.target.value.replace(/[^\d]/g,""); deb=setTimeout(()=>setF({valorMax:v}),450); });
-  $("#f-sort").addEventListener("change",e=>setF({sort:e.target.value}));
-  $("#btn-clear").addEventListener("click",()=>{ F={...EMPTY}; page=1; showAll=false; renderDock(); runSearch(); renderSavedBar(); });
-  const btnAll=$("#btn-all"); if(btnAll) btnAll.addEventListener("click",()=>{ F={...EMPTY}; page=1; showAll=true; renderDock(); runSearch(); renderSavedBar(); toast("Exibindo todos os resultados em uma só página"); });
+  $("#btn-clear").addEventListener("click",()=>{ F={...EMPTY}; page=1; showAll=false; renderDock(); renderResultsToolbar(); runSearch(); renderSavedBar(); });
   $("#btn-save").addEventListener("click",openSaveModal);
   $("#presets").addEventListener("click",e=>{
     const b=e.target.closest(".preset"); if(!b) return;
@@ -794,10 +791,36 @@ function renderDock(){
       const hoje=new Date(); const fim=new Date(); fim.setDate(fim.getDate()+dias); fim.setHours(23,59,59,0);
       F={...F,encerramentoDe:toISOin(hoje),encerramentoAte:toISOin(fim)};
     }
-    page=1; showAll=false; renderDock(); runSearch();
+    page=1; showAll=false; renderDock(); renderResultsToolbar(); runSearch();
   });
   markPreset();
   attachAutocomplete();
+}
+
+function renderResultsToolbar(){
+  const tb=$("#results-toolbar"); if(!tb) return;
+  tb.innerHTML=
+    '<div class="search-row">'+I.search+'<input id="f-q" type="text" placeholder="Buscar por objeto, Itens, órgão ou palavra-chave… ex.: uniformes, ambulância, prefeitura" value="'+esc(F.q)+'"></div>'+
+    '<div class="sort-wrap">'+
+      '<p class="flabel" style="margin-bottom:0;white-space:nowrap">'+I.sort+'Ordenar por</p>'+
+      '<select class="field" id="f-sort" style="height:44px">'+
+        '<option value="encerramento_asc"'+(F.sort==="encerramento_asc"?" selected":"")+'>Encerramento mais próximo</option>'+
+        '<option value="encerramento_desc"'+(F.sort==="encerramento_desc"?" selected":"")+'>Encerramento mais distante</option>'+
+        '<option value="publicacao_desc"'+(F.sort==="publicacao_desc"?" selected":"")+'>Publicação mais recente</option>'+
+        '<option value="valor_desc"'+(F.sort==="valor_desc"?" selected":"")+'>Maior valor estimado</option>'+
+      '</select>'+
+    '</div>'+
+    '<button type="button" class="btn-all-res" id="btn-all">'+I.layers+'Mostrar todos os resultados</button>';
+
+  let deb=null;
+  const fq=$("#f-q");
+  if(fq) fq.addEventListener("input",e=>{ clearTimeout(deb); const v=e.target.value; deb=setTimeout(()=>setF({q:v}),450); });
+  const fs=$("#f-sort");
+  if(fs) fs.addEventListener("change",e=>setF({sort:e.target.value}));
+  const btnAll=$("#btn-all");
+  if(btnAll) btnAll.addEventListener("click",()=>{
+    page=1; showAll=true; renderResultsToolbar(); runSearch(); renderSavedBar(); toast("Exibindo todos os resultados em uma só página");
+  });
 }
 
 function markPreset(){
@@ -1118,7 +1141,7 @@ function renderSavedBar(){
     savedSearches.map((s,i)=>'<span class="saved-chip"><button type="button" class="apply" data-i="'+i+'">'+esc(s.name)+'</button><button type="button" class="rm" data-i="'+i+'" aria-label="Excluir busca">'+I.x.replace('width="16" height="16"','width="12" height="12"')+'</button></span>').join("");
   bar.querySelectorAll(".apply").forEach(b=>b.addEventListener("click",()=>{
     const s=savedSearches[Number(b.dataset.i)];
-    F={...EMPTY,...(s.filters||{})}; page=1; renderDock(); renderSavedBar(); runSearch();
+    F={...EMPTY,...(s.filters||{})}; page=1; renderDock(); renderResultsToolbar(); renderSavedBar(); runSearch();
   }));
   bar.querySelectorAll(".rm").forEach(b=>b.addEventListener("click",()=>{
     savedSearches.splice(Number(b.dataset.i),1); persist("radar:savedSearches",savedSearches); renderSavedBar();
@@ -1159,7 +1182,7 @@ function boot(){
   $("#btn-favorites").addEventListener("click",openFavoritesModal);
   $("#fav-count").textContent=String(favorites.length);
   $("#st-portais").textContent=String(PORTAIS.length);
-  renderTicker(); renderSavedBar(); renderDock(); renderHeader(); runSearch(); fetchFacets();
+  renderTicker(); renderSavedBar(); renderDock(); renderResultsToolbar(); renderHeader(); runSearch(); fetchFacets();
 }
 document.readyState==="loading" ? document.addEventListener("DOMContentLoaded",boot) : boot();
 </script>
