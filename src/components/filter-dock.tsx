@@ -45,6 +45,18 @@ export function FilterDock({ filters, facets, onChange, onReset, onSaveSearch }:
 
   const applyPreset = (dias: number) => {
     const hoje = new Date();
+    if (dias === 1) {
+      // Opção "Amanhã": propostas com encerramento amanhã
+      const amanha = new Date();
+      amanha.setDate(amanha.getDate() + 1);
+      const dataStr = toISODateInput(amanha);
+      onChange({
+        ...filters,
+        encerramentoDe: dataStr,
+        encerramentoAte: dataStr,
+      });
+      return;
+    }
     const fim = new Date();
     fim.setDate(fim.getDate() + dias);
     fim.setHours(23, 59, 59, 0);
@@ -146,9 +158,13 @@ export function FilterDock({ filters, facets, onChange, onReset, onSaveSearch }:
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {PRESETS_PRAZO.map((p) => {
+              const targetDate = new Date();
+              targetDate.setDate(targetDate.getDate() + p.dias);
+              const targetDateStr = toISODateInput(targetDate);
               const active =
-                filters.encerramentoAte &&
-                toISODateInput(new Date(Date.now() + p.dias * 86400000)) === filters.encerramentoAte;
+                p.dias === 1
+                  ? filters.encerramentoDe === targetDateStr && filters.encerramentoAte === targetDateStr
+                  : filters.encerramentoAte === targetDateStr;
               return (
                 <button
                   key={p.label}
