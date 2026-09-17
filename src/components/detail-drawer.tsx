@@ -1,31 +1,3 @@
-function parseCompraUasg(id: string, linkPncp?: string | null, linkSistemaOrigem?: string | null) {
-  let compra = "";
-  let uasg = "";
-  const m = (id || "").match(/^(\d{14})-[0-9]+-(\d+)\/(\d{4})/);
-  if (m) {
-    const seq = parseInt(m[2], 10);
-    const ano = m[3];
-    compra = `${seq}/${ano}`;
-  } else if (linkPncp) {
-    const ml = linkPncp.match(/(?:editais|compras)\/(\d{14})\/(\d{4})\/(\d+)/);
-    if (ml) {
-      compra = `${parseInt(ml[3], 10)}/${ml[2]}`;
-    }
-  }
-
-  if (linkSistemaOrigem) {
-    const mu =
-      linkSistemaOrigem.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora)=(\d+)/i) ||
-      linkSistemaOrigem.match(/uasg\/(\d+)/i);
-    if (mu) uasg = mu[1];
-  }
-  if (!uasg && m) {
-    uasg = m[1].replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5");
-  }
-
-  return { compra: compra || id || "—", uasg: uasg || "—" };
-}
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -62,7 +34,6 @@ const ESFERA_LABEL: Record<string, string> = { F: "Federal", E: "Estadual", M: "
 export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite }: DetailDrawerProps) {
   const [detail, setDetail] = useState<LicitacaoDetail | null>(null);
   const [itens, setItens] = useState<LicitacaoItem[]>([]);
-  const [showAllItens, setShowAllItens] = useState(false);
   const [documentos, setDocumentos] = useState<LicitacaoDocumento[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -70,7 +41,6 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
     if (!licitacao) return;
     setDetail(null);
     setItens([]);
-    setShowAllItens(false);
     setDocumentos([]);
     setLoading(true);
     const ctrl = new AbortController();
@@ -182,15 +152,6 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                 <Info label="Unidade compradora" icon={Landmark} full>
                   <span className="font-semibold text-white">{l.orgao ?? "—"}</span>
                 </Info>
-                <Info label="Nº da compra / N da uasg" icon={Receipt} full>
-                  <span className="font-mono font-semibold text-lime-200">
-                    {parseCompraUasg(l.id, l.linkPncp, l.linkSistemaOrigem).compra}
-                  </span>{" "}
-                  <span className="text-fog">/ UASG:</span>{" "}
-                  <span className="font-mono text-mist">
-                    {parseCompraUasg(l.id, l.linkPncp, l.linkSistemaOrigem).uasg}
-                  </span>
-                </Info>
                 <Info label="Fonte" icon={Radar}>
                   {l.portalNome ?? "PNCP"}
                 </Info>
@@ -230,68 +191,45 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                 {!loading && itens.length === 0 && (
                   <p className="mt-2 text-[13px] text-fog/70">Itens não disponíveis na base pública.</p>
                 )}
-                {!loading && itens.length > 0 && (() => {
-                  const sortedItens = [...itens].sort((a, b) => {
-                    const na = a.numeroItem != null && !isNaN(Number(a.numeroItem)) ? Number(a.numeroItem) : Infinity;
-                    const nb = b.numeroItem != null && !isNaN(Number(b.numeroItem)) ? Number(b.numeroItem) : Infinity;
-                    return na - nb;
-                  });
-                  const displayItens = showAllItens ? sortedItens : sortedItens.slice(0, 15);
-
-                  return (
-                    <div className="mt-3 overflow-hidden rounded-xl border border-line">
-                      <table className="w-full text-left text-[12.5px]">
-                        <thead>
-                          <tr className="border-b border-line bg-panel-2/60 text-[10.5px] uppercase tracking-wider text-fog">
-                            <th className="px-3 py-2 font-semibold">#</th>
-                            <th className="px-3 py-2 font-semibold">Item / Descrição</th>
-                            <th className="px-3 py-2 text-right font-semibold">Qtd.</th>
-                            <th className="px-3 py-2 text-right font-semibold">V. Unitário</th>
-                            <th className="px-3 py-2 text-right font-semibold">Vlr. total</th>
+                {!loading && itens.length > 0 && (
+                  <div className="mt-3 overflow-hidden rounded-xl border border-line">
+                    <table className="w-full text-left text-[12.5px]">
+                      <thead>
+                        <tr className="border-b border-line bg-panel-2/60 text-[10.5px] uppercase tracking-wider text-fog">
+                          <th className="px-3 py-2 font-semibold">#</th>
+                          <th className="px-3 py-2 font-semibold">Item / Descrição</th>
+                          <th className="px-3 py-2 text-right font-semibold">Qtd.</th>
+                          <th className="px-3 py-2 text-right font-semibold">V. Unitário</th>
+                          <th className="px-3 py-2 text-right font-semibold">Vlr. total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {itens.slice(0, 60).map((it, idx) => (
+                          <tr key={idx} className="border-b border-line/50 last:border-0 hover:bg-white/[0.03]">
+                            <td className="font-mono px-3 py-2 text-fog">{it.numeroItem ?? idx + 1}</td>
+                            <td className="px-3 py-2 text-mist">
+                              <p className="line-clamp-2">{it.titulo ?? it.descricao ?? "—"}</p>
+                            </td>
+                            <td className="font-mono px-3 py-2 text-right text-fog">
+                              {it.quantidade != null ? `${it.quantidade} ${it.unidade ?? ""}` : "—"}
+                            </td>
+                            <td className="font-mono px-3 py-2 text-right text-lime-200/80">
+                              {it.valorUnitario != null ? fmtBRL(it.valorUnitario) : "—"}
+                            </td>
+                            <td className="font-mono px-3 py-2 text-right text-lime-200/90">
+                              {it.valorTotal != null ? fmtBRL(it.valorTotal) : "—"}
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {displayItens.map((it, idx) => {
-                            const itemNum = it.numeroItem != null && !isNaN(Number(it.numeroItem)) ? it.numeroItem : idx + 1;
-                            return (
-                              <tr key={idx} className="border-b border-line/50 last:border-0 hover:bg-white/[0.03]">
-                                <td className="font-mono px-3 py-2 text-fog">{itemNum}</td>
-                                <td className="px-3 py-2 text-mist">
-                                  <p className="line-clamp-2">{it.titulo ?? it.descricao ?? "—"}</p>
-                                </td>
-                                <td className="font-mono px-3 py-2 text-right text-fog">
-                                  {it.quantidade != null ? `${it.quantidade} ${it.unidade ?? ""}` : "—"}
-                                </td>
-                                <td className="font-mono px-3 py-2 text-right text-lime-200/80">
-                                  {it.valorUnitario != null ? fmtBRL(it.valorUnitario) : "—"}
-                                </td>
-                                <td className="font-mono px-3 py-2 text-right text-lime-200/90">
-                                  {it.valorTotal != null ? fmtBRL(it.valorTotal) : "—"}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                      {sortedItens.length > 15 && (
-                        <div className="border-t border-line p-2.5 text-center">
-                          {!showAllItens ? (
-                            <button
-                              type="button"
-                              onClick={() => setShowAllItens(true)}
-                              className="inline-flex items-center gap-1.5 rounded-lg border border-signal/45 bg-signal/15 px-3.5 py-1.5 text-xs font-semibold text-lime-200 transition-colors hover:bg-signal/25"
-                            >
-                              <PackageOpen className="h-3.5 w-3.5" />
-                              Mostrar todos os itens da Licitação ({sortedItens.length})
-                            </button>
-                          ) : (
-                            <p className="text-xs text-fog">Exibindo todos os {sortedItens.length} itens da licitação.</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
+                        ))}
+                      </tbody>
+                    </table>
+                    {itens.length > 60 && (
+                      <p className="border-t border-line px-3 py-2 text-center text-[11px] text-fog">
+                        + {itens.length - 60} itens — veja todos no sistema de origem
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* documentos e anexos */}

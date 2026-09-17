@@ -606,32 +606,6 @@ async function runSearch(){
   loading=false; renderHeader(); renderGrid(); renderPagination();
 }
 
-/* ---------- aux PNCP compra / UASG ---------- */
-function parseCompraUasg(id, linkPncp, linkSistemaOrigem){
-  let compra="", uasg="";
-  const m = (id||"").match(/^(\d{14})-[0-9]+-(\d+)\/(\d{4})/);
-  if(m){
-    const seq = parseInt(m[2],10);
-    const ano = m[3];
-    compra = seq + "/" + ano;
-  } else if(linkPncp){
-    const ml = linkPncp.match(/(?:editais|compras)\/(\d{14})\/(\d{4})\/(\d+)/);
-    if(ml){
-      compra = parseInt(ml[3],10) + "/" + ml[2];
-    }
-  }
-
-  if(linkSistemaOrigem){
-    const mu = linkSistemaOrigem.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora)=(\d+)/i) || linkSistemaOrigem.match(/uasg\/(\d+)/i);
-    if(mu) uasg = mu[1];
-  }
-  if(!uasg && m){
-    uasg = m[1].replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,"$1.$2.$3/$4-$5");
-  }
-
-  return { compra: compra || id || "—", uasg: uasg || "—" };
-}
-
 async function fetchDetail(id, linkPncp, linkSistemaOrigem){
   const q=new URLSearchParams({select:COLS_FULL,numero_controle_pncp:"eq."+id,limit:"1"});
   let rows=[];
@@ -686,7 +660,6 @@ async function fetchDetail(id, linkPncp, linkSistemaOrigem){
             valor_unitario:it.valorUnitarioEstimado,
             valor_total:it.valorTotal
           }));
-          items.sort((a,b)=>(Number(a.numero_item)||0)-(Number(b.numero_item)||0));
         }
       }catch(e){}
     }
@@ -1030,7 +1003,6 @@ function openDrawer(l){
   const dl=deadline(l.dataEncerramento);
   const cor=(l.portalKey&&PORTAL_COR[l.portalKey])||"#94a3b8";
   const isFav=favIds().has(l.id);
-  const cuInfo=parseCompraUasg(l.id, l.linkPncp, l.linkSistemaOrigem);
   root.innerHTML=
   '<div class="overlay" id="ovl"></div>'+
   '<aside class="drawer" id="drw" role="dialog" aria-modal="true">'+
@@ -1044,7 +1016,6 @@ function openDrawer(l){
       '<div class="ddl-box tone-'+dl.tone+'"><div><p class="lbl">'+I.cal+'Fim do recebimento de propostas</p><p class="val" style="font-weight:600">'+fmtDT(l.dataEncerramento)+'</p></div><p class="big">'+dl.label+'</p></div>'+
       '<dl class="dgrid">'+
         '<div class="dcell full"><dt>'+I.landmark+'Unidade compradora</dt><dd style="font-weight:600;color:#fff">'+esc(l.orgao||"—")+'</dd></div>'+
-        '<div class="dcell full"><dt>'+I.receipt+'Nº da compra / N da uasg</dt><dd style="font-weight:600;color:#d9f99d"><span class="fm">'+esc(cuInfo.compra)+'</span> <span style="color:var(--fog);font-weight:400;margin:0 .35rem">/</span> UASG: <span class="fm">'+esc(cuInfo.uasg)+'</span></dd></div>'+
         '<div class="dcell"><dt>'+I.radar+'Fonte</dt><dd>'+esc(l.portalNome||"PNCP")+'</dd></div>'+
         '<div class="dcell"><dt>'+I.pin+'Localidade</dt><dd>'+esc(l.municipio||"—")+(l.uf?" / "+esc(l.uf):"")+'</dd></div>'+
         '<div class="dcell"><dt>Esfera</dt><dd>'+esc(l.esfera?(ESFERA[l.esfera]||l.esfera):"—")+'</dd></div>'+
@@ -1077,48 +1048,16 @@ function openDrawer(l){
       if(oz&&ot){ ot.textContent=d.licitacao.resumo; oz.style.display="block"; }
     }
     const z=$("#itens-zone");
-    const its=((d&&d.itens)||[]).slice();
-    // Garante ordenacao exata crescente 1, 2, 3, 4, 5...
-    its.sort((a,b)=>{
-      const na = (a.numero_item!=null && !isNaN(Number(a.numero_item))) ? Number(a.numero_item) : Infinity;
-      const nb = (b.numero_item!=null && !isNaN(Number(b.numero_item))) ? Number(b.numero_item) : Infinity;
-      return na - nb;
-    });
-
+    const its=(d&&d.itens)||[];
     const itCount=$("#itens-count");
     if(itCount && its.length) itCount.textContent="("+its.length+")";
     if(z){
       if(!its.length){
         z.innerHTML='<p style="margin-top:.5rem;font-size:13px;color:rgba(139,152,169,.7)">Itens não disponíveis na base pública.</p>';
       } else {
-        let showAllItens = its.length <= 15;
-        function renderItensTable(){
-          const displayList = showAllItens ? its : its.slice(0, 15);
-          let html = '<div class="itab"><table><thead><tr><th>#</th><th>Item / Descrição</th><th style="text-align:right">Qtd.</th><th style="text-align:right">V. Unitário</th><th style="text-align:right">Vlr. total</th></tr></thead><tbody>'+
-            displayList.map((it,idx)=>{
-              const num = (it.numero_item!=null && !isNaN(Number(it.numero_item))) ? it.numero_item : (idx+1);
-              return '<tr><td class="td-m">'+num+'</td><td>'+ esc(it.titulo||it.descricao||"—")+'</td><td class="td-m" style="text-align:right">'+(it.quantidade!=null?esc(String(it.quantidade))+" "+esc(it.unidade||""):"—")+'</td><td class="td-m" style="text-align:right;color:rgba(217,249,157,.85)">'+(it.valor_unitario!=null?fmtBRL(it.valor_unitario):"—")+'</td><td class="td-v">'+(it.valor_total!=null?fmtBRL(it.valor_total):"—")+'</td></tr>';
-            }).join("")+
-          '</tbody></table></div>';
-
-          if(its.length > 15){
-            if(!showAllItens){
-              html += '<div style="margin-top:.6rem;text-align:center"><button type="button" class="dbtn" id="btn-show-all-itens" style="cursor:pointer;padding:.45rem .9rem;font-size:12px;background:rgba(163,230,53,.15);border-color:rgba(163,230,53,.5);color:#ecfccb">'+I.layers+'Mostrar todos os itens da Licitação ('+its.length+')</button></div>';
-            } else {
-              html += '<p class="more-note" style="text-align:center;color:var(--fog);margin-top:.5rem">Exibindo todos os '+its.length+' itens da licitação.</p>';
-            }
-          }
-          z.innerHTML = html;
-
-          const btnShowAllIt = $("#btn-show-all-itens");
-          if(btnShowAllIt){
-            btnShowAllIt.addEventListener("click", ()=>{
-              showAllItens = true;
-              renderItensTable();
-            });
-          }
-        }
-        renderItensTable();
+        z.innerHTML='<div class="itab"><table><thead><tr><th>#</th><th>Item / Descrição</th><th style="text-align:right">Qtd.</th><th style="text-align:right">V. Unitário</th><th style="text-align:right">Vlr. total</th></tr></thead><tbody>'+
+          its.slice(0,60).map((it,idx)=>'<tr><td class="td-m">'+(it.numero_item!=null?it.numero_item:idx+1)+'</td><td>'+ esc(it.titulo||it.descricao||"—")+'</td><td class="td-m" style="text-align:right">'+(it.quantidade!=null?esc(String(it.quantidade))+" "+esc(it.unidade||""):"—")+'</td><td class="td-m" style="text-align:right;color:rgba(217,249,157,.85)">'+(it.valor_unitario!=null?fmtBRL(it.valor_unitario):"—")+'</td><td class="td-v">'+(it.valor_total!=null?fmtBRL(it.valor_total):"—")+'</td></tr>').join("")+
+        '</tbody></table>'+(its.length>60?'<p class="more-note">+ '+(its.length-60)+' itens — veja todos no sistema de origem</p>':"")+'</div>';
       }
     }
 
