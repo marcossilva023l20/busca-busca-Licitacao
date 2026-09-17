@@ -41,6 +41,7 @@ interface FavoriteRow {
 export function RadarApp() {
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
+  const [showAll, setShowAll] = useState(false);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +64,7 @@ export function RadarApp() {
   }, []);
 
   /* ---------- busca ---------- */
-  const runSearch = useCallback(async (f: FilterState, p: number) => {
+  const runSearch = useCallback(async (f: FilterState, p: number, all: boolean) => {
     setLoading(true);
     setError(null);
     const sp = new URLSearchParams();
@@ -78,12 +79,13 @@ export function RadarApp() {
     if (f.valorMax) sp.set("valorMax", f.valorMax);
     sp.set("sort", f.sort);
     sp.set("page", String(p));
+    if (all) sp.set("all", "true");
 
     try {
       const res = await fetch(`/api/licitacoes?${sp}`);
       if (!res.ok) throw new Error();
       const data = (await res.json()) as SearchResult;
-      setResult(data);
+      setResult(all ? { ...data, totalPages: 1, page: 1, pageSize: data.items.length } : data);
     } catch {
       setError("Não foi possível consultar a fonte de dados agora. Tente novamente em instantes.");
     } finally {
@@ -95,14 +97,21 @@ export function RadarApp() {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     const delay = firstRun.current ? 0 : 450;
     firstRun.current = false;
-    debounceRef.current = setTimeout(() => runSearch(filters, page), delay);
+    debounceRef.current = setTimeout(() => runSearch(filters, page, showAll), delay);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [filters, page, runSearch]);
+  }, [filters, page, showAll, runSearch]);
 
   const changeFilters = (f: FilterState) => {
     setFilters(f);
+    setShowAll(false);
+    setPage(1);
+  };
+
+  const handleShowAll = () => {
+    setFilters(EMPTY_FILTERS);
+    setShowAll(true);
     setPage(1);
   };
 
@@ -236,6 +245,7 @@ export function RadarApp() {
             facets={facets}
             onChange={changeFilters}
             onReset={() => changeFilters(EMPTY_FILTERS)}
+            onShowAll={handleShowAll}
             onSaveSearch={() => setSaveOpen(true)}
           />
         </div>

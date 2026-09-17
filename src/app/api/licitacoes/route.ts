@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     valorMin: sp.get("valorMin") ? Number(sp.get("valorMin")) : undefined,
     valorMax: sp.get("valorMax") ? Number(sp.get("valorMax")) : undefined,
     page: Math.max(1, Number(sp.get("page") ?? 1) || 1),
-    pageSize: PAGE_SIZE,
+    pageSize: sp.get("all") === "true" ? 1000 : Math.min(Number(sp.get("pageSize")) || PAGE_SIZE, 1000),
     sort: (sp.get("sort") as SearchParams["sort"]) ?? "encerramento_asc",
   };
 

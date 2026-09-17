@@ -503,7 +503,7 @@ function normTerm(s){ return s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCa
 /* ---------- estado ---------- */
 const EMPTY = {q:"",uf:"",municipio:"",modalidades:[],portais:[],encerramentoDe:"",encerramentoAte:"",valorMin:"",valorMax:"",sort:"encerramento_asc"};
 let F = {...EMPTY};
-let page = 1, loading=false, result=null, errorMsg=null;
+let page = 1, loading=false, result=null, errorMsg=null, showAll=false;
 let favorites = load("radar:favorites");
 let savedSearches = load("radar:savedSearches");
 let firstTotal = null;
@@ -557,17 +557,21 @@ async function queryAtlas(f,p){
     q.set("or","("+parts.join(",")+")");
   }
   const order = {encerramento_asc:"data_encerramento.asc.nullslast",encerramento_desc:"data_encerramento.desc.nullslast",valor_desc:"valor_estimado.desc.nullslast",publicacao_desc:"data_publicacao.desc.nullslast"}[f.sort]||"data_encerramento.asc.nullslast";
-  q.set("order",order); q.set("limit",String(PAGE_SIZE)); q.set("offset",String((p-1)*PAGE_SIZE));
+  q.set("order",order);
+  const lim = showAll ? 1000 : PAGE_SIZE;
+  const off = showAll ? 0 : (p-1)*PAGE_SIZE;
+  q.set("limit",String(lim)); q.set("offset",String(off));
   const res = await fetch(REST+"/pncp_licitacoes?"+q.toString(),{headers:sbHeaders({"Prefer":"count=exact"}),signal:AbortSignal.timeout(18000)});
   if(!res.ok) throw new Error("Supabase "+res.status);
   const cr = res.headers.get("content-range")||"";
   const total = Number((cr.split("/")[1]||0))||0;
   const rows = await res.json();
-  return {total,page:p,pageSize:PAGE_SIZE,totalPages:Math.max(1,Math.ceil(total/PAGE_SIZE)),items:rows.map(mapRow),source:"atlas"};
+  return {total,page:showAll?1:p,pageSize:showAll?rows.length:PAGE_SIZE,totalPages:showAll?1:Math.max(1,Math.ceil(total/PAGE_SIZE)),items:rows.map(mapRow),source:"atlas"};
 }
 
 async function searchPncp(f,p){
-  const q = new URLSearchParams({tipos_documento:"edital",status:"recebendo_proposta",pagina:String(p),tam_pagina:String(Math.min(PAGE_SIZE,100))});
+  const tam = showAll ? 100 : Math.min(PAGE_SIZE,100);
+  const q = new URLSearchParams({tipos_documento:"edital",status:"recebendo_proposta",pagina:String(showAll?1:p),tam_pagina:String(tam)});
   if(f.q) q.set("q",f.q); if(f.uf) q.set("uf",f.uf.toUpperCase()); if(f.municipio) q.set("municipio_nome",f.municipio);
   if(f.modalidades.length===1) q.set("modalidade_licitacao_id",String(f.modalidades[0]));
   const res = await fetch("https://pncp.gov.br/api/search/?"+q,{headers:{Accept:"application/json"},signal:AbortSignal.timeout(25000)});
@@ -583,7 +587,7 @@ async function searchPncp(f,p){
     esfera:it.esfera_id||null,quantidadeItens:null
   }));
   const total=Number(d.total||items.length)||0;
-  return {total,page:p,pageSize:PAGE_SIZE,totalPages:Math.max(1,Math.ceil(total/PAGE_SIZE)),items,source:"pncp"};
+  return {total,page:showAll?1:p,pageSize:showAll?items.length:PAGE_SIZE,totalPages:showAll?1:Math.max(1,Math.ceil(total/PAGE_SIZE)),items,source:"pncp"};
 }
 
 async function runSearch(){
@@ -776,8 +780,8 @@ function renderDock(){
   $("#f-vmin").addEventListener("input",e=>{ clearTimeout(deb); const v=e.target.value.replace(/[^\d]/g,""); deb=setTimeout(()=>setF({valorMin:v}),450); });
   $("#f-vmax").addEventListener("input",e=>{ clearTimeout(deb); const v=e.target.value.replace(/[^\d]/g,""); deb=setTimeout(()=>setF({valorMax:v}),450); });
   $("#f-sort").addEventListener("change",e=>setF({sort:e.target.value}));
-  $("#btn-clear").addEventListener("click",()=>{ F={...EMPTY}; page=1; renderDock(); runSearch(); renderSavedBar(); });
-  const btnAll=$("#btn-all"); if(btnAll) btnAll.addEventListener("click",()=>{ F={...EMPTY}; page=1; renderDock(); runSearch(); renderSavedBar(); toast("Exibindo todos os resultados"); });
+  $("#btn-clear").addEventListener("click",()=>{ F={...EMPTY}; page=1; showAll=false; renderDock(); runSearch(); renderSavedBar(); });
+  const btnAll=$("#btn-all"); if(btnAll) btnAll.addEventListener("click",()=>{ F={...EMPTY}; page=1; showAll=true; renderDock(); runSearch(); renderSavedBar(); toast("Exibindo todos os resultados em uma só página"); });
   $("#btn-save").addEventListener("click",openSaveModal);
   $("#presets").addEventListener("click",e=>{
     const b=e.target.closest(".preset"); if(!b) return;
@@ -790,7 +794,7 @@ function renderDock(){
       const hoje=new Date(); const fim=new Date(); fim.setDate(fim.getDate()+dias); fim.setHours(23,59,59,0);
       F={...F,encerramentoDe:toISOin(hoje),encerramentoAte:toISOin(fim)};
     }
-    page=1; renderDock(); runSearch();
+    page=1; showAll=false; renderDock(); runSearch();
   });
   markPreset();
   attachAutocomplete();
@@ -870,13 +874,17 @@ function attachAutocomplete(){
 }
 
 /* ---------- resultados ---------- */
-function setF(patch){ F={...F,...patch}; page=1; runSearch(); const ac=$("#btn-clear"); if(ac) ac.innerHTML=I.eraser+'Limpar'+(activeCount()?" ("+activeCount()+")":""); markPreset(); }
+function setF(patch){ F={...F,...patch}; page=1; showAll=false; runSearch(); const ac=$("#btn-clear"); if(ac) ac.innerHTML=I.eraser+'Limpar'+(activeCount()?" ("+activeCount()+")":""); markPreset(); }
 
 function renderHeader(){
   const h=$("#result-header"); if(!h) return;
   let title="Buscando licitações…";
   let src="";
-  if(result){ title='<span class="n">'+result.total.toLocaleString("pt-BR")+'</span> licitaç'+(result.total===1?"ão aberta":"ões abertas"); src='<span class="src-badge">'+I.db+(result.source==="atlas"?"Base Atlas · PNCP":"API PNCP (direto)")+'</span>'; }
+  if(result){
+    const countTxt = showAll ? ('<span class="n">'+result.items.length+'</span> de <span class="n">'+result.total.toLocaleString("pt-BR")+'</span> licitações (todas em uma só página)') : ('<span class="n">'+result.total.toLocaleString("pt-BR")+'</span> licitaç'+(result.total===1?"ão aberta":"ões abertas"));
+    title = countTxt;
+    src = '<span class="src-badge">'+I.db+(result.source==="atlas"?"Base Atlas · PNCP":"API PNCP (direto)")+'</span>';
+  }
   h.innerHTML='<div style="display:flex;align-items:center;flex-wrap:wrap">'+ '<h2>'+title+'</h2>'+src+'</div>'+
     '<button type="button" class="csv-btn" id="btn-csv" '+((!result||!result.items.length||loading)?"disabled":"")+'>'+I.download+'Exportar página (CSV)</button>';
   const b=$("#btn-csv"); if(b) b.addEventListener("click",exportCsv);
@@ -937,7 +945,7 @@ function pageWindow(p,t){
 
 function renderPagination(){
   const nav=$("#pgn"); if(!nav) return;
-  if(!result||result.totalPages<=1){ nav.innerHTML=""; return; }
+  if(!result||showAll||result.totalPages<=1){ nav.innerHTML=showAll?'<p class="ms-empty" style="text-align:center;width:100%;font-size:12px;color:var(--fog)">Exibindo todos os resultados ('+result.items.length+' licitações) em uma única página.</p>':""; return; }
   const p=result.page,t=result.totalPages;
   nav.innerHTML='<button type="button" data-p="'+(p-1)+'" '+(p<=1?"disabled":"")+' aria-label="Página anterior">'+I.chevL+'</button>'+
     pageWindow(p,t).map(x=>x==="…"?'<span class="dots">…</span>':'<button type="button" data-p="'+x+'" class="'+(x===p?"cur":"")+'">'+x+'</button>').join("")+

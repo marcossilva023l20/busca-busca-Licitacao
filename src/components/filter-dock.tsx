@@ -25,10 +25,11 @@ interface FilterDockProps {
   facets: Facets;
   onChange: (f: FilterState) => void;
   onReset: () => void;
+  onShowAll?: () => void;
   onSaveSearch: () => void;
 }
 
-export function FilterDock({ filters, facets, onChange, onReset, onSaveSearch }: FilterDockProps) {
+export function FilterDock({ filters, facets, onChange, onReset, onShowAll, onSaveSearch }: FilterDockProps) {
   const set = <K extends keyof FilterState>(key: K, value: FilterState[K]) =>
     onChange({ ...filters, [key]: value });
 
@@ -221,7 +222,7 @@ export function FilterDock({ filters, facets, onChange, onReset, onSaveSearch }:
         <div className="flex flex-wrap items-end gap-2 lg:col-span-12 xl:col-span-2">
           <button
             type="button"
-            onClick={onReset}
+            onClick={onShowAll ?? onReset}
             className="flex h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-signal/45 bg-signal/15 text-[12.5px] font-semibold text-lime-200 transition-colors hover:bg-signal/25"
           >
             <Layers className="h-4 w-4" />
