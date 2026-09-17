@@ -243,6 +243,13 @@ select.field option{background:var(--panel2);color:var(--mist)}
 .itens{margin-top:1.5rem}
 .itens .k{display:flex;align-items:center;gap:.5rem;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--fog)}
 .itens .k svg{color:rgba(163,230,53,.8)}
+.docs-list{margin-top:.75rem;display:flex;flex-direction:column;gap:.5rem}
+.doc-card{display:flex;align-items:center;justify-content:space-between;gap:.75rem;border:1px solid var(--line);background:rgba(12,17,23,.6);border-radius:12px;padding:.75rem .85rem;transition:border-color .2s}
+.doc-card:hover{border-color:var(--line2)}
+.doc-card .dt{font-size:13px;font-weight:500;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doc-card .dm{font-size:11px;color:var(--fog);margin-top:.15rem;display:flex;align-items:center;gap:.4rem}
+.doc-card .dbtn{display:inline-flex;align-items:center;gap:.35rem;border-radius:8px;border:1px solid var(--line);background:rgba(17,23,34,.7);padding:.35rem .65rem;font-size:11.5px;font-weight:600;color:#d9f99d;text-decoration:none;transition:.2s}
+.doc-card .dbtn:hover{border-color:rgba(163,230,53,.5);background:rgba(163,230,53,.15)}
 .itab{margin-top:.75rem;overflow:hidden;border:1px solid var(--line);border-radius:12px}
 table{width:100%;font-size:12.5px;text-align:left;border-collapse:collapse}
 thead tr{border-bottom:1px solid var(--line);background:rgba(17,23,34,.6)}
@@ -443,7 +450,7 @@ const PORTAIS = [
   {key:"outros-pncp",nome:"Outros Portais",cor:"#94a3b8"}
 ];
 const PORTAL_COR = Object.fromEntries(PORTAIS.map(p=>[p.key,p.cor]));
-const PRESETS = [{label:"Hoje",dias:0},{label:"48h",dias:2},{label:"7 dias",dias:7},{label:"15 dias",dias:15},{label:"30 dias",dias:30}];
+const PRESETS = [{label:"Hoje",dias:0},{label:"Amanhã",dias:1},{label:"48h",dias:2},{label:"7 dias",dias:7},{label:"15 dias",dias:15},{label:"30 dias",dias:30}];
 const ESFERA = {F:"Federal",E:"Estadual",M:"Municipal"};
 
 /* ---------- ícones (Lucide, inline) ---------- */
@@ -468,6 +475,7 @@ const I = {
   trash:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
   ext:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>',
   download:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>',
+  file:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>',
   landmark:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>',
   gavel:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 12.5-8 8a2.119 2.119 0 1 1-3-3l8-8"/><path d="m16 16 6-6"/><path d="m8 8 6-6"/><path d="m9 7 8 8"/><path d="m21 11-8-8"/></svg>',
   lock:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
@@ -589,14 +597,115 @@ async function runSearch(){
   loading=false; renderHeader(); renderGrid(); renderPagination();
 }
 
-async function fetchDetail(id){
+async function fetchDetail(id, linkPncp, linkSistemaOrigem){
   const q=new URLSearchParams({select:COLS_FULL,numero_controle_pncp:"eq."+id,limit:"1"});
-  const res=await fetch(REST+"/pncp_licitacoes?"+q,{headers:sbHeaders(),signal:AbortSignal.timeout(15000)});
-  const rows=res.ok?await res.json():[];
+  let rows=[];
+  try{
+    const res=await fetch(REST+"/pncp_licitacoes?"+q,{headers:sbHeaders(),signal:AbortSignal.timeout(15000)});
+    if(res.ok) rows=await res.json();
+  }catch(e){}
+
   const qi=new URLSearchParams({select:"numero_item,titulo,descricao,quantidade,unidade,valor_unitario,valor_total",numero_controle_pncp:"eq."+id,order:"numero_item.asc.nullslast",limit:"500"});
-  const ri=await fetch(REST+"/pncp_licitacao_itens?"+qi,{headers:sbHeaders(),signal:AbortSignal.timeout(15000)});
-  const items=ri.ok?await ri.json():[];
-  return {licitacao:rows.length?mapRow(rows[0]):null,itens:items};
+  let items=[];
+  try{
+    const ri=await fetch(REST+"/pncp_licitacao_itens?"+qi,{headers:sbHeaders(),signal:AbortSignal.timeout(15000)});
+    if(ri.ok) items=await ri.json();
+  }catch(e){}
+
+  let documentos=[];
+  try{
+    const qd=new URLSearchParams({numero_controle_pncp:"eq."+id,limit:"100"});
+    const rd=await fetch(REST+"/pncp_licitacao_documentos?"+qd,{headers:sbHeaders(),signal:AbortSignal.timeout(10000)});
+    if(rd.ok) {
+      const drows=await rd.json();
+      documentos=drows.map(d=>({
+        titulo:d.titulo||d.nome||"Documento",
+        tipoNome:d.tipo_documento_nome||d.tipo_nome||null,
+        url:d.url||d.uri||null,
+        dataPublicacao:d.data_publicacao_pncp||d.data_publicacao||null
+      }));
+    }
+  }catch(e){}
+
+  const m=(id||"").match(/^(\d{14})-[0-9]+-(\d+)\/(\d{4})/);
+  let cnpj="", ano="", seq="";
+  if(m){ cnpj=m[1]; seq=String(parseInt(m[2],10)); ano=m[3]; }
+  else if(linkPncp){
+    const ml=linkPncp.match(/(?:editais|compras)\/(\d{14})\/(\d{4})\/(\d+)/);
+    if(ml){ cnpj=ml[1]; ano=ml[2]; seq=String(parseInt(ml[3],10)); }
+  }
+
+  if(cnpj && ano && seq){
+    if(!items.length){
+      try{
+        const rIt=await fetch("https://pncp.gov.br/api/pncp/v1/orgaos/"+cnpj+"/compras/"+ano+"/"+seq+"/itens?pagina=1&tamanhoPagina=100",{headers:{Accept:"application/json"},signal:AbortSignal.timeout(6000)});
+        if(rIt.ok){
+          const dIt=await rIt.json();
+          const list=Array.isArray(dIt)?dIt:(Array.isArray(dIt&&dIt.data)?dIt.data:[]);
+          items=list.map(it=>({
+            numero_item:it.numeroItem,
+            titulo:it.descricao||it.titulo||null,
+            descricao:it.descricao||null,
+            quantidade:it.quantidade,
+            unidade:it.unidadeMedida,
+            valor_unitario:it.valorUnitarioEstimado,
+            valor_total:it.valorTotal
+          }));
+        }
+      }catch(e){}
+    }
+    if(!documentos.length){
+      try{
+        const rDoc=await fetch("https://pncp.gov.br/api/pncp/v1/orgaos/"+cnpj+"/compras/"+ano+"/"+seq+"/arquivos?pagina=1&tamanhoPagina=50",{headers:{Accept:"application/json"},signal:AbortSignal.timeout(6000)});
+        if(rDoc.ok){
+          const dDoc=await rDoc.json();
+          const list=Array.isArray(dDoc)?dDoc:(Array.isArray(dDoc&&dDoc.data)?dDoc.data:[]);
+          documentos=list.map(doc=>({
+            titulo:doc.titulo||doc.tipoDocumentoNome||"Documento",
+            tipoNome:doc.tipoDocumentoNome||null,
+            url:doc.url||("https://pncp.gov.br/api/pncp/v1/orgaos/"+cnpj+"/compras/"+ano+"/"+seq+"/arquivos/"+doc.sequencialDocumento),
+            dataPublicacao:doc.dataPublicacaoPncp||null
+          }));
+        }
+      }catch(e){}
+    }
+  }
+
+  const licitacao=rows.length?mapRow(rows[0]):null;
+  if(!items.length && licitacao && (licitacao.resumo || licitacao.titulo)){
+    items=[{
+      numero_item:1,
+      titulo:licitacao.titulo,
+      descricao:licitacao.resumo||licitacao.titulo,
+      quantidade:licitacao.quantidadeItens||1,
+      unidade:"UN",
+      valor_unitario:licitacao.valorEstimado,
+      valor_total:licitacao.valorEstimado
+    }];
+  }
+
+  if(!documentos.length){
+    if(linkPncp || (licitacao && licitacao.linkPncp)){
+      const lp=linkPncp || licitacao.linkPncp;
+      documentos.push({
+        titulo:"Edital e Anexos (Página Oficial PNCP)",
+        tipoNome:"Edital / Anexos",
+        url:lp,
+        dataPublicacao:licitacao?licitacao.dataPublicacao:null
+      });
+    }
+    if(linkSistemaOrigem || (licitacao && licitacao.linkSistemaOrigem)){
+      const lso=linkSistemaOrigem || licitacao.linkSistemaOrigem;
+      documentos.push({
+        titulo:"Acesso no "+((licitacao&&licitacao.portalNome)|| "Sistema de Origem"),
+        tipoNome:"Portal de Disputa",
+        url:lso,
+        dataPublicacao:licitacao?licitacao.dataPublicacao:null
+      });
+    }
+  }
+
+  return {licitacao, itens:items, documentos};
 }
 
 async function fetchFacets(){
@@ -671,8 +780,15 @@ function renderDock(){
   $("#presets").addEventListener("click",e=>{
     const b=e.target.closest(".preset"); if(!b) return;
     const dias=PRESETS[Number(b.dataset.i)].dias;
-    const hoje=new Date(); const fim=new Date(); fim.setDate(fim.getDate()+dias); fim.setHours(23,59,59,0);
-    F={...F,encerramentoDe:toISOin(hoje),encerramentoAte:toISOin(fim)}; page=1; renderDock(); runSearch();
+    if(dias===1){
+      const amanha=new Date(); amanha.setDate(amanha.getDate()+1);
+      const str=toISOin(amanha);
+      F={...F,encerramentoDe:str,encerramentoAte:str};
+    } else {
+      const hoje=new Date(); const fim=new Date(); fim.setDate(fim.getDate()+dias); fim.setHours(23,59,59,0);
+      F={...F,encerramentoDe:toISOin(hoje),encerramentoAte:toISOin(fim)};
+    }
+    page=1; renderDock(); runSearch();
   });
   markPreset();
   attachAutocomplete();
@@ -682,7 +798,11 @@ function markPreset(){
   document.querySelectorAll(".preset").forEach((b,i)=>{
     const p=PRESETS[i];
     const target=toISOin(new Date(Date.now()+p.dias*86400000));
-    b.classList.toggle("on", F.encerramentoAte===target);
+    if(p.dias===1){
+      b.classList.toggle("on", F.encerramentoDe===target && F.encerramentoAte===target);
+    } else {
+      b.classList.toggle("on", F.encerramentoAte===target);
+    }
   });
 }
 
@@ -867,7 +987,8 @@ function openDrawer(l){
         '<div class="dcell"><dt>Abertura</dt><dd>'+fmtDT(l.dataAbertura)+'</dd></div>'+
       '</dl>'+
       '<div class="obj" id="obj-zone" style="display:'+((l.resumo&&l.resumo!==l.titulo)?"block":"none")+'"><p class="k">Objeto</p><p id="obj-txt">'+esc(l.resumo||"")+'</p></div>'+
-      '<div class="itens"><p class="k">'+I.pkg+'Itens</p><div id="itens-zone"><div class="loading-note"><svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="3" opacity=".2"/><path d="M22 12a10 10 0 0 0-10-10" stroke-width="3" stroke-linecap="round"/></svg>Carregando itens…</div></div></div>'+
+      '<div class="itens"><p class="k">'+I.pkg+'Itens da Licitação <span id="itens-count" style="font-size:11px;color:var(--fog)"></span></p><div id="itens-zone"><div class="loading-note"><svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="3" opacity=".2"/><path d="M22 12a10 10 0 0 0-10-10" stroke-width="3" stroke-linecap="round"/></svg>Carregando itens…</div></div></div>'+
+      '<div class="itens"><p class="k">'+I.file+'Documentos e Anexos <span id="docs-count" style="font-size:11px;color:var(--fog)"></span></p><div id="docs-zone"><div class="loading-note"><svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="3" opacity=".2"/><path d="M22 12a10 10 0 0 0-10-10" stroke-width="3" stroke-linecap="round"/></svg>Carregando documentos…</div></div></div>'+
     '</div>'+
     '<div class="drawer-foot">'+
       (l.linkPncp?'<a class="act act-pncp" href="'+esc(l.linkPncp)+'" target="_blank" rel="noopener noreferrer">'+I.ext+'Abrir no PNCP</a>':"")+
@@ -881,19 +1002,47 @@ function openDrawer(l){
   $("#drw-close").addEventListener("click",closeDrawer);
   $("#drw-fav").addEventListener("click",()=>{ toggleFavorite(l); closeDrawer(); });
   drawerEl=$("#drw");
-  // detalhe completo (resumo + itens)
-  fetchDetail(l.id).then(d=>{
+  // detalhe completo (resumo + itens + documentos)
+  fetchDetail(l.id, l.linkPncp, l.linkSistemaOrigem).then(d=>{
     if(d&&d.licitacao&&d.licitacao.resumo&&d.licitacao.resumo!==l.titulo){
       const oz=$("#obj-zone"), ot=$("#obj-txt");
       if(oz&&ot){ ot.textContent=d.licitacao.resumo; oz.style.display="block"; }
     }
-    const z=$("#itens-zone"); if(!z) return;
+    const z=$("#itens-zone");
     const its=(d&&d.itens)||[];
-    if(!its.length){ z.innerHTML='<p style="margin-top:.5rem;font-size:13px;color:rgba(139,152,169,.7)">Itens não disponíveis na base pública.</p>'; return; }
-    z.innerHTML='<div class="itab"><table><thead><tr><th>#</th><th>Item</th><th style="text-align:right">Qtd.</th><th style="text-align:right">Vlr. total</th></tr></thead><tbody>'+
-      its.slice(0,60).map((it,idx)=>'<tr><td class="td-m">'+(it.numero_item!=null?it.numero_item:idx+1)+'</td><td>'+ esc(it.titulo||it.descricao||"—")+'</td><td class="td-m" style="text-align:right">'+(it.quantidade!=null?esc(String(it.quantidade))+" "+esc(it.unidade||""):"—")+'</td><td class="td-v">'+(it.valor_total!=null?fmtBRL(it.valor_total):"—")+'</td></tr>').join("")+
-    '</tbody></table>'+(its.length>60?'<p class="more-note">+ '+(its.length-60)+' itens — veja todos no sistema de origem</p>':"")+'</div>';
-  }).catch(()=>{ const z=$("#itens-zone"); if(z) z.innerHTML='<p style="margin-top:.5rem;font-size:13px;color:rgba(139,152,169,.7)">Não foi possível carregar os itens.</p>'; });
+    const itCount=$("#itens-count");
+    if(itCount && its.length) itCount.textContent="("+its.length+")";
+    if(z){
+      if(!its.length){
+        z.innerHTML='<p style="margin-top:.5rem;font-size:13px;color:rgba(139,152,169,.7)">Itens não disponíveis na base pública.</p>';
+      } else {
+        z.innerHTML='<div class="itab"><table><thead><tr><th>#</th><th>Item / Descrição</th><th style="text-align:right">Qtd.</th><th style="text-align:right">Vlr. total</th></tr></thead><tbody>'+
+          its.slice(0,60).map((it,idx)=>'<tr><td class="td-m">'+(it.numero_item!=null?it.numero_item:idx+1)+'</td><td>'+ esc(it.titulo||it.descricao||"—")+'</td><td class="td-m" style="text-align:right">'+(it.quantidade!=null?esc(String(it.quantidade))+" "+esc(it.unidade||""):"—")+'</td><td class="td-v">'+(it.valor_total!=null?fmtBRL(it.valor_total):"—")+'</td></tr>').join("")+
+        '</tbody></table>'+(its.length>60?'<p class="more-note">+ '+(its.length-60)+' itens — veja todos no sistema de origem</p>':"")+'</div>';
+      }
+    }
+
+    const dz=$("#docs-zone");
+    const docs=(d&&d.documentos)||[];
+    const docCount=$("#docs-count");
+    if(docCount && docs.length) docCount.textContent="("+docs.length+")";
+    if(dz){
+      if(!docs.length){
+        dz.innerHTML='<p style="margin-top:.5rem;font-size:13px;color:rgba(139,152,169,.7)">Nenhum documento disponível no momento.</p>';
+      } else {
+        dz.innerHTML='<div class="docs-list">'+docs.map(doc=>
+          '<div class="doc-card"><div style="min-width:0;flex:1"><p class="dt">'+esc(doc.titulo)+'</p>'+
+          '<div class="dm">'+(doc.tipoNome?'<span>'+esc(doc.tipoNome)+'</span>':"")+
+          (doc.dataPublicacao?'<span>•</span><span>'+fmtDT(doc.dataPublicacao)+'</span>':"")+
+          '</div></div>'+
+          (doc.url?'<a class="dbtn" href="'+esc(doc.url)+'" target="_blank" rel="noopener noreferrer">'+I.download+'Acessar</a>':"")+
+          '</div>').join("")+'</div>';
+      }
+    }
+  }).catch(()=>{
+    const z=$("#itens-zone"); if(z) z.innerHTML='<p style="margin-top:.5rem;font-size:13px;color:rgba(139,152,169,.7)">Não foi possível carregar os itens.</p>';
+    const dz=$("#docs-zone"); if(dz) dz.innerHTML='<p style="margin-top:.5rem;font-size:13px;color:rgba(139,152,169,.7)">Não foi possível carregar os documentos.</p>';
+  });
 }
 function closeDrawer(){
   const root=$("#drawer-root");
