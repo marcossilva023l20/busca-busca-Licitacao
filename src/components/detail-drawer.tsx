@@ -1,0 +1,288 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  CalendarClock,
+  ExternalLink,
+  Gavel,
+  Heart,
+  Landmark,
+  Lock,
+  MapPin,
+  PackageOpen,
+  Receipt,
+  X,
+} from "lucide-react";
+import { PORTAL_COR } from "@/lib/constants";
+import type { Licitacao, LicitacaoItem } from "@/lib/types";
+import { TONE_STYLES, deadlineInfo, fmtBRL, fmtDateTime } from "@/lib/format";
+import { Spinner } from "./ui-primitives";
+
+interface DetailDrawerProps {
+  licitacao: Licitacao | null;
+  onClose: () => void;
+  isFavorite: boolean;
+  onToggleFavorite: (l: Licitacao) => void;
+}
+
+const ESFERA_LABEL: Record<string, string> = { F: "Federal", E: "Estadual", M: "Municipal" };
+
+export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite }: DetailDrawerProps) {
+  const [detail, setDetail] = useState<{ licitacao: Licitacao; itens: LicitacaoItem[] } | null>(null);
+  const [itens, setItens] = useState<LicitacaoItem[]>([]);
+  const [loadingItens, setLoadingItens] = useState(false);
+
+  useEffect(() => {
+    if (!licitacao) return;
+    setDetail(null);
+    setItens([]);
+    setLoadingItens(true);
+    const ctrl = new AbortController();
+    fetch(`/api/licitacoes/${encodeURIComponent(licitacao.id)}`, { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d: { licitacao: Licitacao; itens: LicitacaoItem[] }) => {
+        setDetail(d);
+        setItens(d.itens ?? []);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingItens(false));
+    return () => ctrl.abort();
+  }, [licitacao]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  // mescla dados leves do card com o detalhe completo (que traz o `resumo`)
+  const l: Licitacao | null =
+    licitacao && detail?.licitacao
+      ? { ...licitacao, ...detail.licitacao }
+      : licitacao;
+  const dl = deadlineInfo(l?.dataEncerramento);
+  const portalCor = (l?.portalKey && PORTAL_COR[l.portalKey]) || "#94a3b8";
+
+  return (
+    <AnimatePresence>
+      {l && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm"
+          />
+          <motion.aside
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 260 }}
+            className="fixed bottom-0 right-0 top-0 z-[70] flex w-full max-w-xl flex-col border-l border-line bg-ink-2 shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+          >
+            {/* header */}
+            <div className="flex items-start justify-between gap-4 border-b border-line p-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold"
+                  style={{ borderColor: `${portalCor}55`, color: portalCor, background: `${portalCor}14` }}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: portalCor }} />
+                  {l.portalNome ?? "PNCP"}
+                </span>
+                {l.modalidadeNome && (
+                  <span className="flex items-center gap-1 rounded-full border border-line-2/80 bg-panel-2/70 px-2.5 py-1 text-[11px] font-medium text-mist">
+                    <Gavel className="h-3 w-3" />
+                    {l.modalidadeNome}
+                  </span>
+                )}
+                {l.srp && (
+                  <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-1 text-[11px] font-medium text-cyan-300">
+                    Registro de Preços
+                  </span>
+                )}
+                {l.orcamentoSigiloso && (
+                  <span className="flex items-center gap-1 rounded-full border border-amber-300/30 bg-amber-400/10 px-2.5 py-1 text-[11px] font-medium text-amber-300">
+                    <Lock className="h-3 w-3" />
+                    Orçamento sigiloso
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg border border-line p-2 text-fog transition-colors hover:border-line-2 hover:text-white"
+                aria-label="Fechar detalhes"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* corpo */}
+            <div className="flex-1 overflow-y-auto p-5">
+              <h2 className="font-display text-xl font-semibold leading-snug text-white">{l.titulo}</h2>
+              <p className="font-mono mt-2 text-[11px] text-fog/80">{l.id}</p>
+
+              {/* bloco prazo */}
+              <div className={`mt-4 flex items-center justify-between rounded-xl border px-4 py-3 ${TONE_STYLES[dl.tone]}`}>
+                <div>
+                  <p className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.14em] opacity-80">
+                    <CalendarClock className="h-3.5 w-3.5" />
+                    Fim do recebimento de propostas
+                  </p>
+                  <p className="font-mono mt-1 text-sm font-semibold">{fmtDateTime(l.dataEncerramento)}</p>
+                </div>
+                <p className="font-display text-2xl font-bold">{dl.label}</p>
+              </div>
+
+              {/* grade de infos */}
+              <dl className="mt-5 grid grid-cols-2 gap-3">
+                <Info label="Órgão" icon={Landmark} full>
+                  {l.orgao ?? "—"}
+                </Info>
+                <Info label="Localidade" icon={MapPin}>
+                  {l.municipio ?? "—"} {l.uf ? `/ ${l.uf}` : ""}
+                </Info>
+                <Info label="Esfera">{l.esfera ? ESFERA_LABEL[l.esfera] ?? l.esfera : "—"}</Info>
+                <Info label="Valor estimado" icon={Receipt}>
+                  <span className="font-mono text-lime-200">
+                    {l.orcamentoSigiloso ? "Sigiloso" : fmtBRL(l.valorEstimado)}
+                  </span>
+                </Info>
+                <Info label="Modo de disputa">{l.modoDisputa ?? "—"}</Info>
+                <Info label="Publicação">{fmtDateTime(l.dataPublicacao)}</Info>
+                <Info label="Abertura">{fmtDateTime(l.dataAbertura)}</Info>
+              </dl>
+
+              {/* resumo */}
+              {l.resumo && l.resumo !== l.titulo && (
+                <div className="mt-5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-fog">Objeto</p>
+                  <p className="mt-1.5 text-[13.5px] leading-relaxed text-mist">{l.resumo}</p>
+                </div>
+              )}
+
+              {/* itens */}
+              <div className="mt-6">
+                <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-fog">
+                  <PackageOpen className="h-4 w-4 text-signal/80" />
+                  Itens {loadingItens ? "" : itens.length ? `(${itens.length})` : ""}
+                </p>
+                {loadingItens && (
+                  <div className="mt-3 flex items-center gap-2 text-sm text-fog">
+                    <Spinner /> Carregando itens…
+                  </div>
+                )}
+                {!loadingItens && itens.length === 0 && (
+                  <p className="mt-2 text-[13px] text-fog/70">Itens não disponíveis na base pública.</p>
+                )}
+                {!loadingItens && itens.length > 0 && (
+                  <div className="mt-3 overflow-hidden rounded-xl border border-line">
+                    <table className="w-full text-left text-[12.5px]">
+                      <thead>
+                        <tr className="border-b border-line bg-panel-2/60 text-[10.5px] uppercase tracking-wider text-fog">
+                          <th className="px-3 py-2 font-semibold">#</th>
+                          <th className="px-3 py-2 font-semibold">Item</th>
+                          <th className="px-3 py-2 text-right font-semibold">Qtd.</th>
+                          <th className="px-3 py-2 text-right font-semibold">Vlr. total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {itens.slice(0, 60).map((it, idx) => (
+                          <tr key={idx} className="border-b border-line/50 last:border-0 hover:bg-white/[0.03]">
+                            <td className="font-mono px-3 py-2 text-fog">{it.numeroItem ?? idx + 1}</td>
+                            <td className="px-3 py-2 text-mist">
+                              <p className="clamp-2">{it.titulo ?? it.descricao ?? "—"}</p>
+                            </td>
+                            <td className="font-mono px-3 py-2 text-right text-fog">
+                              {it.quantidade != null ? `${it.quantidade} ${it.unidade ?? ""}` : "—"}
+                            </td>
+                            <td className="font-mono px-3 py-2 text-right text-lime-200/90">
+                              {it.valorTotal != null ? fmtBRL(it.valorTotal) : "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {itens.length > 60 && (
+                      <p className="border-t border-line px-3 py-2 text-center text-[11px] text-fog">
+                        + {itens.length - 60} itens — veja todos no sistema de origem
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ações */}
+            <div className="flex flex-wrap items-center gap-2 border-t border-line p-4">
+              {l.linkPncp && (
+                <a
+                  href={l.linkPncp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-signal font-display text-[13px] font-bold uppercase tracking-wide text-ink transition-opacity hover:opacity-85"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Abrir no PNCP
+                </a>
+              )}
+              {l.linkSistemaOrigem && (
+                <a
+                  href={l.linkSistemaOrigem}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-11 flex-1 items-center justify-center gap-2 rounded-lg border text-[13px] font-semibold transition-colors"
+                  style={{ borderColor: `${portalCor}55`, color: portalCor, background: `${portalCor}12` }}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  {l.portalNome ? `Ir ao ${l.portalNome}` : "Sistema de origem"}
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={() => onToggleFavorite(l)}
+                className={`flex h-11 items-center justify-center gap-2 rounded-lg border px-4 text-[13px] font-semibold transition-colors ${
+                  isFavorite
+                    ? "border-red-400/40 bg-red-400/10 text-red-400"
+                    : "border-line text-fog hover:border-red-400/40 hover:text-red-400"
+                }`}
+              >
+                <Heart className="h-4 w-4" fill={isFavorite ? "currentColor" : "none"} />
+                {isFavorite ? "Salvo" : "Favoritar"}
+              </button>
+            </div>
+          </motion.aside>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function Info({
+  label,
+  icon: Icon,
+  children,
+  full,
+}: {
+  label: string;
+  icon?: typeof MapPin;
+  children: React.ReactNode;
+  full?: boolean;
+}) {
+  return (
+    <div className={`rounded-xl border border-line bg-panel/60 p-3 ${full ? "col-span-2" : ""}`}>
+      <dt className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-fog">
+        {Icon && <Icon className="h-3 w-3" />}
+        {label}
+      </dt>
+      <dd className="mt-1 text-[13px] leading-snug text-mist">{children}</dd>
+    </div>
+  );
+}
