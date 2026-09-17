@@ -960,12 +960,16 @@ function exportCsv(){
 
 /* ---------- drawer ---------- */
 let drawerEl=null;
+let drawerCloseTimer=null;
 function openDrawer(l){
-  closeDrawer();
+  if(drawerCloseTimer){
+    clearTimeout(drawerCloseTimer);
+    drawerCloseTimer=null;
+  }
+  const root=$("#drawer-root");
   const dl=deadline(l.dataEncerramento);
   const cor=(l.portalKey&&PORTAL_COR[l.portalKey])||"#94a3b8";
   const isFav=favIds().has(l.id);
-  const root=$("#drawer-root");
   root.innerHTML=
   '<div class="overlay" id="ovl"></div>'+
   '<aside class="drawer" id="drw" role="dialog" aria-modal="true">'+
@@ -1000,10 +1004,11 @@ function openDrawer(l){
   document.body.style.overflow="hidden";
   $("#ovl").addEventListener("click",closeDrawer);
   $("#drw-close").addEventListener("click",closeDrawer);
-  $("#drw-fav").addEventListener("click",()=>{ toggleFavorite(l); closeDrawer(); });
+  $("#drw-fav").addEventListener("click",()=>{ toggleFavorite(l); });
   drawerEl=$("#drw");
   // detalhe completo (resumo + itens + documentos)
   fetchDetail(l.id, l.linkPncp, l.linkSistemaOrigem).then(d=>{
+    if(!$("#drawer-root").contains($("#drw"))) return;
     if(d&&d.licitacao&&d.licitacao.resumo&&d.licitacao.resumo!==l.titulo){
       const oz=$("#obj-zone"), ot=$("#obj-txt");
       if(oz&&ot){ ot.textContent=d.licitacao.resumo; oz.style.display="block"; }
@@ -1045,12 +1050,19 @@ function openDrawer(l){
   });
 }
 function closeDrawer(){
+  if(drawerCloseTimer){
+    clearTimeout(drawerCloseTimer);
+    drawerCloseTimer=null;
+  }
   const root=$("#drawer-root");
   const ovl=$("#ovl"), drw=$("#drw");
   if(ovl) ovl.classList.remove("on");
   if(drw) drw.classList.remove("on");
   document.body.style.overflow="";
-  setTimeout(()=>{ root.innerHTML=""; },320);
+  drawerCloseTimer=setTimeout(()=>{
+    root.innerHTML="";
+    drawerCloseTimer=null;
+  },320);
 }
 
 /* ---------- favoritos ---------- */
