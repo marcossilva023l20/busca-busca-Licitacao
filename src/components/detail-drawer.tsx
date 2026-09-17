@@ -13,6 +13,7 @@ import {
   Lock,
   MapPin,
   PackageOpen,
+  Radar,
   Receipt,
   X,
 } from "lucide-react";
@@ -148,8 +149,11 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
 
               {/* grade de infos */}
               <dl className="mt-5 grid grid-cols-2 gap-3">
-                <Info label="Órgão" icon={Landmark} full>
-                  {l.orgao ?? "—"}
+                <Info label="Unidade compradora" icon={Landmark} full>
+                  <span className="font-semibold text-white">{l.orgao ?? "—"}</span>
+                </Info>
+                <Info label="Fonte" icon={Radar}>
+                  {l.portalNome ?? "PNCP"}
                 </Info>
                 <Info label="Localidade" icon={MapPin}>
                   {l.municipio ?? "—"} {l.uf ? `/ ${l.uf}` : ""}
@@ -195,6 +199,7 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                           <th className="px-3 py-2 font-semibold">#</th>
                           <th className="px-3 py-2 font-semibold">Item / Descrição</th>
                           <th className="px-3 py-2 text-right font-semibold">Qtd.</th>
+                          <th className="px-3 py-2 text-right font-semibold">V. Unitário</th>
                           <th className="px-3 py-2 text-right font-semibold">Vlr. total</th>
                         </tr>
                       </thead>
@@ -207,6 +212,9 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                             </td>
                             <td className="font-mono px-3 py-2 text-right text-fog">
                               {it.quantidade != null ? `${it.quantidade} ${it.unidade ?? ""}` : "—"}
+                            </td>
+                            <td className="font-mono px-3 py-2 text-right text-lime-200/80">
+                              {it.valorUnitario != null ? fmtBRL(it.valorUnitario) : "—"}
                             </td>
                             <td className="font-mono px-3 py-2 text-right text-lime-200/90">
                               {it.valorTotal != null ? fmtBRL(it.valorTotal) : "—"}

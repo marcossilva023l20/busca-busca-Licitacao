@@ -760,7 +760,8 @@ function renderDock(){
       '<option value="encerramento_desc"'+(F.sort==="encerramento_desc"?" selected":"")+'>Encerramento mais distante</option>'+
       '<option value="publicacao_desc"'+(F.sort==="publicacao_desc"?" selected":"")+'>Publicação mais recente</option>'+
       '<option value="valor_desc"'+(F.sort==="valor_desc"?" selected":"")+'>Maior valor estimado</option></select></div>'+
-    '<div class="btn-row"><button type="button" class="btn btn-ghost" id="btn-clear">'+I.eraser+'Limpar'+(activeCount()?" ("+activeCount()+")":"")+'</button>'+
+    '<div class="btn-row" style="flex-wrap:wrap"><button type="button" class="btn" style="flex:1.4;border-color:rgba(163,230,53,.45);color:#ecfccb;background:rgba(163,230,53,.12);font-weight:600" id="btn-all">'+I.layers+'Mostrar todos os resultados</button>'+
+    '<button type="button" class="btn btn-ghost" id="btn-clear" title="Limpar filtros">'+I.eraser+'Limpar'+(activeCount()?" ("+activeCount()+")":"")+'</button>'+
     '<button type="button" class="btn btn-save" id="btn-save" title="Salvar esta combinação de filtros">'+I.bookmark+'Salvar</button></div>'+
   '</div>';
 
@@ -776,6 +777,7 @@ function renderDock(){
   $("#f-vmax").addEventListener("input",e=>{ clearTimeout(deb); const v=e.target.value.replace(/[^\d]/g,""); deb=setTimeout(()=>setF({valorMax:v}),450); });
   $("#f-sort").addEventListener("change",e=>setF({sort:e.target.value}));
   $("#btn-clear").addEventListener("click",()=>{ F={...EMPTY}; page=1; renderDock(); runSearch(); renderSavedBar(); });
+  const btnAll=$("#btn-all"); if(btnAll) btnAll.addEventListener("click",()=>{ F={...EMPTY}; page=1; renderDock(); runSearch(); renderSavedBar(); toast("Exibindo todos os resultados"); });
   $("#btn-save").addEventListener("click",openSaveModal);
   $("#presets").addEventListener("click",e=>{
     const b=e.target.closest(".preset"); if(!b) return;
@@ -982,7 +984,8 @@ function openDrawer(l){
       '<h2>'+esc(l.titulo)+'</h2><p class="pid">'+esc(l.id)+'</p>'+
       '<div class="ddl-box tone-'+dl.tone+'"><div><p class="lbl">'+I.cal+'Fim do recebimento de propostas</p><p class="val" style="font-weight:600">'+fmtDT(l.dataEncerramento)+'</p></div><p class="big">'+dl.label+'</p></div>'+
       '<dl class="dgrid">'+
-        '<div class="dcell full"><dt>'+I.landmark+'Órgão</dt><dd>'+esc(l.orgao||"—")+'</dd></div>'+
+        '<div class="dcell full"><dt>'+I.landmark+'Unidade compradora</dt><dd style="font-weight:600;color:#fff">'+esc(l.orgao||"—")+'</dd></div>'+
+        '<div class="dcell"><dt>'+I.radar+'Fonte</dt><dd>'+esc(l.portalNome||"PNCP")+'</dd></div>'+
         '<div class="dcell"><dt>'+I.pin+'Localidade</dt><dd>'+esc(l.municipio||"—")+(l.uf?" / "+esc(l.uf):"")+'</dd></div>'+
         '<div class="dcell"><dt>Esfera</dt><dd>'+esc(l.esfera?(ESFERA[l.esfera]||l.esfera):"—")+'</dd></div>'+
         '<div class="dcell"><dt>'+I.receipt+'Valor estimado</dt><dd class="fm" style="color:#d9f99d">'+(l.orcamentoSigiloso?"Sigiloso":fmtBRL(l.valorEstimado))+'</dd></div>'+
@@ -1021,8 +1024,8 @@ function openDrawer(l){
       if(!its.length){
         z.innerHTML='<p style="margin-top:.5rem;font-size:13px;color:rgba(139,152,169,.7)">Itens não disponíveis na base pública.</p>';
       } else {
-        z.innerHTML='<div class="itab"><table><thead><tr><th>#</th><th>Item / Descrição</th><th style="text-align:right">Qtd.</th><th style="text-align:right">Vlr. total</th></tr></thead><tbody>'+
-          its.slice(0,60).map((it,idx)=>'<tr><td class="td-m">'+(it.numero_item!=null?it.numero_item:idx+1)+'</td><td>'+ esc(it.titulo||it.descricao||"—")+'</td><td class="td-m" style="text-align:right">'+(it.quantidade!=null?esc(String(it.quantidade))+" "+esc(it.unidade||""):"—")+'</td><td class="td-v">'+(it.valor_total!=null?fmtBRL(it.valor_total):"—")+'</td></tr>').join("")+
+        z.innerHTML='<div class="itab"><table><thead><tr><th>#</th><th>Item / Descrição</th><th style="text-align:right">Qtd.</th><th style="text-align:right">V. Unitário</th><th style="text-align:right">Vlr. total</th></tr></thead><tbody>'+
+          its.slice(0,60).map((it,idx)=>'<tr><td class="td-m">'+(it.numero_item!=null?it.numero_item:idx+1)+'</td><td>'+ esc(it.titulo||it.descricao||"—")+'</td><td class="td-m" style="text-align:right">'+(it.quantidade!=null?esc(String(it.quantidade))+" "+esc(it.unidade||""):"—")+'</td><td class="td-m" style="text-align:right;color:rgba(217,249,157,.85)">'+(it.valor_unitario!=null?fmtBRL(it.valor_unitario):"—")+'</td><td class="td-v">'+(it.valor_total!=null?fmtBRL(it.valor_total):"—")+'</td></tr>').join("")+
         '</tbody></table>'+(its.length>60?'<p class="more-note">+ '+(its.length-60)+' itens — veja todos no sistema de origem</p>':"")+'</div>';
       }
     }

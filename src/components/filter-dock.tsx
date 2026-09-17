@@ -218,24 +218,34 @@ export function FilterDock({ filters, facets, onChange, onReset, onSaveSearch }:
           </select>
         </div>
 
-        <div className="flex items-end gap-2 lg:col-span-2">
+        <div className="flex flex-wrap items-end gap-2 lg:col-span-12 xl:col-span-2">
           <button
             type="button"
             onClick={onReset}
-            className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-line bg-panel-2/60 text-[13px] font-medium text-fog transition-colors hover:border-danger/40 hover:text-danger"
+            className="flex h-10 w-full items-center justify-center gap-1.5 rounded-lg border border-signal/45 bg-signal/15 text-[12.5px] font-semibold text-lime-200 transition-colors hover:bg-signal/25"
           >
-            <Eraser className="h-4 w-4" />
-            Limpar{activeCount > 0 ? ` (${activeCount})` : ""}
+            <Layers className="h-4 w-4" />
+            Mostrar todos os resultados
           </button>
-          <button
-            type="button"
-            onClick={onSaveSearch}
-            title="Salvar esta combinação de filtros"
-            className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-signal/40 bg-signal/12 text-[13px] font-semibold text-lime-100 transition-colors hover:bg-signal/20"
-          >
-            <Bookmark className="h-4 w-4" />
-            Salvar
-          </button>
+          <div className="flex w-full items-center gap-2">
+            <button
+              type="button"
+              onClick={onReset}
+              className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-line bg-panel-2/60 text-[13px] font-medium text-fog transition-colors hover:border-danger/40 hover:text-danger"
+            >
+              <Eraser className="h-4 w-4" />
+              Limpar{activeCount > 0 ? ` (${activeCount})` : ""}
+            </button>
+            <button
+              type="button"
+              onClick={onSaveSearch}
+              title="Salvar esta combinação de filtros"
+              className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border border-signal/40 bg-signal/12 text-[13px] font-semibold text-lime-100 transition-colors hover:bg-signal/20"
+            >
+              <Bookmark className="h-4 w-4" />
+              Salvar
+            </button>
+          </div>
         </div>
       </div>
     </div>
