@@ -606,6 +606,44 @@ async function runSearch(){
   loading=false; renderHeader(); renderGrid(); renderPagination();
 }
 
+/* ---------- aux Nº da Compra / Nº da UASG ---------- */
+function parseCompraUasg(id, linkPncp, linkSistemaOrigem){
+  let compra = "", uasg = "";
+
+  if(linkSistemaOrigem){
+    const mu = linkSistemaOrigem.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|orgao|uo)=(\d+)/i) || linkSistemaOrigem.match(/uasg\/(\d+)/i);
+    if(mu) uasg = mu[1];
+    const mc = linkSistemaOrigem.match(/(?:numprp|num_pregao|numero_processo|compra|processo|numero)=(\d+[\w\/]*)/i);
+    if(mc) compra = mc[1];
+  }
+
+  // Padrão PETRONECT-7004644265 ou BB-12345
+  const mPref = (id||"").match(/^[A-Z0-9_]+-(\d+)$/i);
+  if(mPref && !compra){
+    compra = mPref[1];
+  }
+
+  // Padrão oficial PNCP: 00394452000103-1-000107/2023
+  const mPncp = (id||"").match(/^(\d{14})-[0-9]+-(\d+)\/(\d{4})/);
+  if(mPncp){
+    const seq = parseInt(mPncp[2], 10);
+    const ano = mPncp[3];
+    if(!compra) compra = seq + "/" + ano;
+    if(!uasg) uasg = mPncp[1];
+  }
+
+  // Link PNCP: .../editais/CNPJ/ANO/SEQ
+  if(linkPncp){
+    const ml = linkPncp.match(/(?:editais|compras)\/(\d{14})\/(\d{4})\/(\d+)/);
+    if(ml){
+      if(!compra) compra = parseInt(ml[3], 10) + "/" + ml[2];
+      if(!uasg) uasg = ml[1];
+    }
+  }
+
+  return { compra: compra || id || "—", uasg: uasg || "—" };
+}
+
 async function fetchDetail(id, linkPncp, linkSistemaOrigem){
   const q=new URLSearchParams({select:COLS_FULL,numero_controle_pncp:"eq."+id,limit:"1"});
   let rows=[];
@@ -1003,6 +1041,7 @@ function openDrawer(l){
   const dl=deadline(l.dataEncerramento);
   const cor=(l.portalKey&&PORTAL_COR[l.portalKey])||"#94a3b8";
   const isFav=favIds().has(l.id);
+  const cuInfo=parseCompraUasg(l.id, l.linkPncp, l.linkSistemaOrigem);
   root.innerHTML=
   '<div class="overlay" id="ovl"></div>'+
   '<aside class="drawer" id="drw" role="dialog" aria-modal="true">'+
@@ -1016,6 +1055,8 @@ function openDrawer(l){
       '<div class="ddl-box tone-'+dl.tone+'"><div><p class="lbl">'+I.cal+'Fim do recebimento de propostas</p><p class="val" style="font-weight:600">'+fmtDT(l.dataEncerramento)+'</p></div><p class="big">'+dl.label+'</p></div>'+
       '<dl class="dgrid">'+
         '<div class="dcell full"><dt>'+I.landmark+'Unidade compradora</dt><dd style="font-weight:600;color:#fff">'+esc(l.orgao||"—")+'</dd></div>'+
+        '<div class="dcell"><dt>'+I.receipt+'Nº da Uasg</dt><dd class="fm" style="font-weight:600;color:#fff">'+esc(cuInfo.uasg)+'</dd></div>'+
+        '<div class="dcell"><dt>'+I.receipt+'Nº da Compra</dt><dd class="fm" style="font-weight:600;color:#d9f99d">'+esc(cuInfo.compra)+'</dd></div>'+
         '<div class="dcell"><dt>'+I.radar+'Fonte</dt><dd>'+esc(l.portalNome||"PNCP")+'</dd></div>'+
         '<div class="dcell"><dt>'+I.pin+'Localidade</dt><dd>'+esc(l.municipio||"—")+(l.uf?" / "+esc(l.uf):"")+'</dd></div>'+
         '<div class="dcell"><dt>Esfera</dt><dd>'+esc(l.esfera?(ESFERA[l.esfera]||l.esfera):"—")+'</dd></div>'+

@@ -1,3 +1,40 @@
+function parseCompraUasg(id: string, linkPncp?: string | null, linkSistemaOrigem?: string | null) {
+  let compra = "";
+  let uasg = "";
+
+  if (linkSistemaOrigem) {
+    const mu =
+      linkSistemaOrigem.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|orgao|uo)=(\d+)/i) ||
+      linkSistemaOrigem.match(/uasg\/(\d+)/i);
+    if (mu) uasg = mu[1];
+    const mc = linkSistemaOrigem.match(/(?:numprp|num_pregao|numero_processo|compra|processo|numero)=(\d+[\w\/]*)/i);
+    if (mc) compra = mc[1];
+  }
+
+  const mPref = (id || "").match(/^[A-Z0-9_]+-(\d+)$/i);
+  if (mPref && !compra) {
+    compra = mPref[1];
+  }
+
+  const m = (id || "").match(/^(\d{14})-[0-9]+-(\d+)\/(\d{4})/);
+  if (m) {
+    const seq = parseInt(m[2], 10);
+    const ano = m[3];
+    if (!compra) compra = `${seq}/${ano}`;
+    if (!uasg) uasg = m[1];
+  }
+
+  if (linkPncp) {
+    const ml = linkPncp.match(/(?:editais|compras)\/(\d{14})\/(\d{4})\/(\d+)/);
+    if (ml) {
+      if (!compra) compra = `${parseInt(ml[3], 10)}/${ml[2]}`;
+      if (!uasg) uasg = ml[1];
+    }
+  }
+
+  return { compra: compra || id || "—", uasg: uasg || "—" };
+}
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -151,6 +188,16 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
               <dl className="mt-5 grid grid-cols-2 gap-3">
                 <Info label="Unidade compradora" icon={Landmark} full>
                   <span className="font-semibold text-white">{l.orgao ?? "—"}</span>
+                </Info>
+                <Info label="Nº da Uasg" icon={Receipt}>
+                  <span className="font-mono text-white">
+                    {parseCompraUasg(l.id, l.linkPncp, l.linkSistemaOrigem).uasg}
+                  </span>
+                </Info>
+                <Info label="Nº da Compra" icon={Receipt}>
+                  <span className="font-mono font-semibold text-lime-200">
+                    {parseCompraUasg(l.id, l.linkPncp, l.linkSistemaOrigem).compra}
+                  </span>
                 </Info>
                 <Info label="Fonte" icon={Radar}>
                   {l.portalNome ?? "PNCP"}
