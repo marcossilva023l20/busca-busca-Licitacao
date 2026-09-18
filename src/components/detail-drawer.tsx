@@ -1,21 +1,88 @@
+function extractNumeroEditalDrawer(l: Licitacao): string {
+  const sources = [l.titulo, l.id, l.resumo];
+  for (const s of sources) {
+    if (!s) continue;
+    const m = s.match(/\b(?:edital|pregao|preg[aã]o|concorr[eê]ncia|dispensa|inexigibilidade|aviso|convite|leil[aã]o|processo)?\s*(?:eletr[oô]nico|presencial)?\s*(?:n[oº°.]?\s*)?(\d{1,6}\/\d{4})\b/i);
+    if (m) return m[1];
+    const m2 = s.match(/\b(?:edital|aviso|processo)\s*(?:n[oº°.]?\s*)?(\d{1,6}[-_]\d{4})\b/i);
+    if (m2) return m2[1].replace("-", "/").replace("_", "/");
+  }
+  if (l.id) {
+    const mPncp = l.id.match(/^\d{14}-\d+-(\d+)\/(\d{4})/);
+    if (mPncp) {
+      return parseInt(mPncp[1], 10) + "/" + mPncp[2];
+    }
+  }
+  return "";
+}
+
+function extractUasg(l: Licitacao, detail?: LicitacaoDetail | null) {
+  if (detail?.uasg) return detail.uasg;
+  const sources = [
+    l.linkSistemaOrigem,
+    l.linkPncp,
+    l.id,
+    l.titulo,
+    l.resumo,
+    detail?.licitacao?.resumo,
+  ];
+  for (const s of sources) {
+    if (!s) continue;
+    const mUrl = s.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|uo)[=/](\d{5,6})/i);
+    if (mUrl) return mUrl[1];
+    const mTxt = s.match(/\b(?:uasg|ug)[\s:.-]*(\d{5,6})\b/i);
+    if (mTxt) return mTxt[1];
+    const mPref = s.match(/\b(?:comprasnet|comprasgov|siasg)[-_](\d{5,6})\b/i);
+    if (mPref) return mPref[1];
+  }
+  return "";
+}
+
+function formatUnidadeCompradora(orgao?: string | null, id?: string | null, linkPncp?: string | null, linkSistemaOrigem?: string | null) {
+  let uasg = "";
+  const sources = [linkSistemaOrigem, linkPncp, id];
+  for (const s of sources) {
+    if (!s) continue;
+    const m =
+      s.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|uo)[=/](\d{5,6})/i) ||
+      s.match(/\b(?:uasg|ug)[\s:.-]*(\d{5,6})\b/i) ||
+      s.match(/\b(?:comprasnet|comprasgov|siasg)[-_](\d{5,6})\b/i);
+    if (m) {
+      uasg = m[1];
+      break;
+    }
+  }
+
+  const nome = (orgao || "").trim();
+  if (uasg && nome) {
+    if (nome.startsWith(uasg)) return nome;
+    return `${uasg} - ${nome}`;
+  }
+  if (uasg) return uasg;
+  return nome || "—";
+}
+
 "use client";
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   CalendarClock,
+  Download,
   ExternalLink,
+  FileText,
   Gavel,
   Heart,
   Landmark,
   Lock,
   MapPin,
   PackageOpen,
+  Radar,
   Receipt,
   X,
 } from "lucide-react";
 import { PORTAL_COR } from "@/lib/constants";
-import type { Licitacao, LicitacaoItem } from "@/lib/types";
+import type { Licitacao, LicitacaoItem, LicitacaoDocumento, LicitacaoDetail } from "@/lib/types";
 import { TONE_STYLES, deadlineInfo, fmtBRL, fmtDateTime } from "@/lib/format";
 import { Spinner } from "./ui-primitives";
 
@@ -29,24 +96,27 @@ interface DetailDrawerProps {
 const ESFERA_LABEL: Record<string, string> = { F: "Federal", E: "Estadual", M: "Municipal" };
 
 export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite }: DetailDrawerProps) {
-  const [detail, setDetail] = useState<{ licitacao: Licitacao; itens: LicitacaoItem[] } | null>(null);
+  const [detail, setDetail] = useState<LicitacaoDetail | null>(null);
   const [itens, setItens] = useState<LicitacaoItem[]>([]);
-  const [loadingItens, setLoadingItens] = useState(false);
+  const [documentos, setDocumentos] = useState<LicitacaoDocumento[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!licitacao) return;
     setDetail(null);
     setItens([]);
-    setLoadingItens(true);
+    setDocumentos([]);
+    setLoading(true);
     const ctrl = new AbortController();
     fetch(`/api/licitacoes/${encodeURIComponent(licitacao.id)}`, { signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((d: { licitacao: Licitacao; itens: LicitacaoItem[] }) => {
+      .then((d: LicitacaoDetail) => {
         setDetail(d);
         setItens(d.itens ?? []);
+        setDocumentos(d.documentos ?? []);
       })
       .catch(() => {})
-      .finally(() => setLoadingItens(false));
+      .finally(() => setLoading(false));
     return () => ctrl.abort();
   }, [licitacao]);
 
@@ -143,8 +213,18 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
 
               {/* grade de infos */}
               <dl className="mt-5 grid grid-cols-2 gap-3">
-                <Info label="Órgão" icon={Landmark} full>
-                  {l.orgao ?? "—"}
+                <Info label="Unidade compradora" icon={Landmark} full>
+                  <span className="font-semibold text-white">
+                    {detail?.unidadeCompradora ?? formatUnidadeCompradora(l.orgao, l.id, l.linkPncp, l.linkSistemaOrigem)}
+                  </span>
+                </Info>
+                <Info label="UASG" icon={Receipt}>
+                  <span className="font-mono font-semibold text-lime-200">
+                    {extractUasg(l, detail) || "—"}
+                  </span>
+                </Info>
+                <Info label="Fonte" icon={Radar}>
+                  {l.portalNome ?? "PNCP"}
                 </Info>
                 <Info label="Localidade" icon={MapPin}>
                   {l.municipio ?? "—"} {l.uf ? `/ ${l.uf}` : ""}
@@ -160,7 +240,7 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                 <Info label="Abertura">{fmtDateTime(l.dataAbertura)}</Info>
               </dl>
 
-              {/* resumo */}
+              {/* resumo / objeto */}
               {l.resumo && l.resumo !== l.titulo && (
                 <div className="mt-5">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-fog">Objeto</p>
@@ -168,28 +248,80 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                 </div>
               )}
 
+              {/* documentos e anexos */}
+              <div className="mt-6">
+                <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-fog">
+                  <FileText className="h-4 w-4 text-signal/80" />
+                  Documentos e Anexos {loading ? "" : documentos.length ? `(${documentos.length})` : ""}
+                </p>
+                {loading && (
+                  <div className="mt-3 flex items-center gap-2 text-sm text-fog">
+                    <Spinner /> Carregando documentos…
+                  </div>
+                )}
+                {!loading && documentos.length === 0 && (
+                  <p className="mt-2 text-[13px] text-fog/70">Nenhum documento disponível no momento.</p>
+                )}
+                {!loading && documentos.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {documentos.map((doc, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between gap-3 rounded-xl border border-line bg-panel/60 p-3 transition-colors hover:border-line-2"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[13px] font-medium text-white">{doc.titulo}</p>
+                          <div className="mt-0.5 flex items-center gap-2 text-[11px] text-fog">
+                            {doc.tipoNome && <span>{doc.tipoNome}</span>}
+                            {doc.dataPublicacao && (
+                              <>
+                                <span>•</span>
+                                <span>{fmtDateTime(doc.dataPublicacao)}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        {doc.url && (
+                          <a
+                            href={doc.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 rounded-lg border border-line bg-panel-2 px-3 py-1.5 text-xs font-semibold text-lime-200 transition-colors hover:border-signal/50 hover:bg-signal/15"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            Acessar
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            
+
               {/* itens */}
               <div className="mt-6">
                 <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-fog">
                   <PackageOpen className="h-4 w-4 text-signal/80" />
-                  Itens {loadingItens ? "" : itens.length ? `(${itens.length})` : ""}
+                  Itens da Licitação {loading ? "" : itens.length ? `(${itens.length})` : ""}
                 </p>
-                {loadingItens && (
+                {loading && (
                   <div className="mt-3 flex items-center gap-2 text-sm text-fog">
                     <Spinner /> Carregando itens…
                   </div>
                 )}
-                {!loadingItens && itens.length === 0 && (
+                {!loading && itens.length === 0 && (
                   <p className="mt-2 text-[13px] text-fog/70">Itens não disponíveis na base pública.</p>
                 )}
-                {!loadingItens && itens.length > 0 && (
+                {!loading && itens.length > 0 && (
                   <div className="mt-3 overflow-hidden rounded-xl border border-line">
                     <table className="w-full text-left text-[12.5px]">
                       <thead>
                         <tr className="border-b border-line bg-panel-2/60 text-[10.5px] uppercase tracking-wider text-fog">
                           <th className="px-3 py-2 font-semibold">#</th>
-                          <th className="px-3 py-2 font-semibold">Item</th>
+                          <th className="px-3 py-2 font-semibold">Item / Descrição</th>
                           <th className="px-3 py-2 text-right font-semibold">Qtd.</th>
+                          <th className="px-3 py-2 text-right font-semibold">V. Unitário</th>
                           <th className="px-3 py-2 text-right font-semibold">Vlr. total</th>
                         </tr>
                       </thead>
@@ -198,10 +330,18 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                           <tr key={idx} className="border-b border-line/50 last:border-0 hover:bg-white/[0.03]">
                             <td className="font-mono px-3 py-2 text-fog">{it.numeroItem ?? idx + 1}</td>
                             <td className="px-3 py-2 text-mist">
-                              <p className="clamp-2">{it.titulo ?? it.descricao ?? "—"}</p>
+                              <p className="line-clamp-2 font-medium text-white">
+                                {it.descricao ?? it.titulo ?? l.resumo ?? l.titulo ?? "—"}
+                              </p>
+                              {it.titulo && it.descricao && it.titulo !== it.descricao && (
+                                <p className="line-clamp-1 mt-0.5 text-[11px] text-fog">{it.titulo}</p>
+                              )}
                             </td>
                             <td className="font-mono px-3 py-2 text-right text-fog">
                               {it.quantidade != null ? `${it.quantidade} ${it.unidade ?? ""}` : "—"}
+                            </td>
+                            <td className="font-mono px-3 py-2 text-right text-lime-200/80">
+                              {it.valorUnitario != null ? fmtBRL(it.valorUnitario) : "—"}
                             </td>
                             <td className="font-mono px-3 py-2 text-right text-lime-200/90">
                               {it.valorTotal != null ? fmtBRL(it.valorTotal) : "—"}
@@ -218,7 +358,7 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                   </div>
                 )}
               </div>
-            </div>
+</div>
 
             {/* ações */}
             <div className="flex flex-wrap items-center gap-2 border-t border-line p-4">

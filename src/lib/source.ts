@@ -24,9 +24,9 @@ const SUPABASE_ANON_KEY =
   process.env.ATLAS_SUPABASE_ANON_KEY ??
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrdWRubmJ1emxqbG9lbndjanNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2MTU2NjQsImV4cCI6MjA4NzE5MTY2NH0.ETcqBjr_9_WAludecUC4IBVjlAjIJZogTpXt-hG0koY";
 
-import type { Facets, Licitacao, LicitacaoItem, SearchResult } from "@/lib/types";
+import type { Facets, Licitacao, LicitacaoItem, LicitacaoDocumento, LicitacaoDetail, SearchResult } from "@/lib/types";
 
-export type { Licitacao, LicitacaoItem, Facets, SearchResult };
+export type { Licitacao, LicitacaoItem, LicitacaoDocumento, LicitacaoDetail, Facets, SearchResult };
 
 const REST = `${SUPABASE_URL}/rest/v1`;
 
@@ -51,6 +51,7 @@ export interface SearchParams {
  *  consultas abrangentes). O `resumo` chega via getLicitacaoDetail. */
 const SELECT_COLS_LIST = [
   "numero_controle_pncp",
+  "resumo",
   "titulo",
   "orgao_entidade",
   "uf",
@@ -284,20 +285,63 @@ async function searchPncp(p: SearchParams): Promise<SearchResult> {
   };
 }
 
-export async function getLicitacaoDetail(id: string): Promise<{
-  licitacao: Licitacao;
-  itens: LicitacaoItem[];
-}> {
+export async function getLicitacaoDetail(id: string): Promise<LicitacaoDetail> {
   const params = new URLSearchParams();
   params.set("select", SELECT_COLS_FULL);
   params.set("numero_controle_pncp", `eq.${id}`);
   params.set("limit", "1");
 
-  const res = await supabaseGet("pncp_licitacoes", params);
-  if (!res.ok) throw new Error(`Supabase ${res.status}`);
-  const rows = (await res.json()) as any[];
-  if (!rows.length) throw new Error("Licitação não encontrada");
+  // Tenta carregar no Supabase
+  let licitacao: Licitacao | null = null;
+  try {
+    const res = await supabaseGet("pncp_licitacoes", params);
+    if (res.ok) {
+      const rows = (await res.json()) as any[];
+      if (rows.length > 0) {
+        licitacao = mapRow(rows[0]);
+      }
+    }
+  } catch (err) {
+    console.warn("[source] Supabase inacessível para detalhe:", err);
+  }
 
+  // Parse dos parâmetros PNCP para consulta ou fallback
+  const pncpParams = parsePncpControlNumber(id);
+
+  // Se o Supabase falhou ou não encontrou, cria a licitação baseada nos parâmetros do PNCP
+  if (!licitacao) {
+    if (!pncpParams) {
+      throw new Error("Licitação não encontrada");
+    }
+    const { cnpj, ano, sequencial } = pncpParams;
+    licitacao = {
+      id,
+      titulo: `Licitação ${sequencial}/${ano}`,
+      resumo: `Processo de contratação pública sob controle ${id}.`,
+      orgao: `Órgão (CNPJ ${cnpj})`,
+      uf: null,
+      municipio: null,
+      modalidadeId: null,
+      modalidadeNome: "Contratação Pública",
+      modoDisputa: null,
+      portalKey: null,
+      portalNome: "PNCP",
+      status: "Em andamento",
+      srp: false,
+      orcamentoSigiloso: false,
+      valorEstimado: null,
+      dataAbertura: null,
+      dataPublicacao: `${ano}-01-01T08:00:00Z`,
+      dataEncerramento: null,
+      linkPncp: `https://pncp.gov.br/app/editais/${cnpj}/${ano}/${sequencial}`,
+      linkSistemaOrigem: null,
+      slug: null,
+      esfera: null,
+      quantidadeItens: null,
+    };
+  }
+
+  // Busca itens no Supabase
   const itParams = new URLSearchParams();
   itParams.set(
     "select",
@@ -307,21 +351,218 @@ export async function getLicitacaoDetail(id: string): Promise<{
   itParams.set("order", "numero_item.asc.nullslast");
   itParams.set("limit", "500");
 
-  const itRes = await supabaseGet("pncp_licitacao_itens", itParams);
-  const itRows = itRes.ok ? ((await itRes.json()) as any[]) : [];
+  let itens: LicitacaoItem[] = [];
+  try {
+    const itRes = await supabaseGet("pncp_licitacao_itens", itParams);
+    if (itRes.ok) {
+      const itRows = (await itRes.json()) as any[];
+      itens = itRows.map((r) => ({
+        numeroItem: r.numero_item ?? null,
+        titulo: r.titulo ?? null,
+        descricao: r.descricao ?? null,
+        quantidade: typeof r.quantidade === "number" ? r.quantidade : null,
+        unidade: r.unidade ?? null,
+        valorUnitario: typeof r.valor_unitario === "number" ? r.valor_unitario : null,
+        valorTotal: typeof r.valor_total === "number" ? r.valor_total : null,
+      }));
+    }
+  } catch (err) {
+    console.warn("[source] Falha ao consultar itens no Supabase:", err);
+  }
+
+  // Busca documentos no Supabase (se existir a tabela pncp_licitacao_documentos ou pncp_licitacao_arquivos)
+  let documentos: LicitacaoDocumento[] = [];
+  try {
+    const docParams = new URLSearchParams();
+    docParams.set("numero_controle_pncp", `eq.${id}`);
+    docParams.set("limit", "100");
+    const docRes = await supabaseGet("pncp_licitacao_documentos", docParams);
+    if (docRes.ok) {
+      const docRows = (await docRes.json()) as any[];
+      documentos = docRows.map((d) => ({
+        id: d.id ?? d.sequencial_documento,
+        sequencial: d.sequencial_documento ?? d.sequencial,
+        titulo: d.titulo ?? d.nome ?? "Documento",
+        tipoNome: d.tipo_documento_nome ?? d.tipo_nome ?? null,
+        url: d.url ?? d.uri ?? null,
+        dataPublicacao: d.data_publicacao_pncp ?? d.data_publicacao ?? null,
+      }));
+    }
+  } catch {
+    // tabela pode não existir no supabase, ignora
+  }
+
+  // Parse dos parâmetros PNCP para consulta direta aos endpoints oficiais do PNCP
+  // Exemplo de id: "13230982000150-1-000107/2023" ou linkPncp: ".../editais/13230982000150/2023/107"
+  const pncp = pncpParams ?? parsePncpControlNumber(licitacao.id, licitacao.linkPncp);
+
+  let unidadeCompradora: string | null = null;
+  let uasg: string | null = null;
+  if (pncp) {
+    const { cnpj, ano, sequencial } = pncp;
+
+    try {
+      const compRes = await fetch(
+        `https://pncp.gov.br/api/pncp/v1/orgaos/${cnpj}/compras/${ano}/${sequencial}`,
+        {
+          headers: { Accept: "application/json", "User-Agent": "RadarLicitacoes/1.0" },
+          signal: AbortSignal.timeout(5000),
+        },
+      );
+      if (compRes.ok) {
+        const dComp = await compRes.json();
+        const u = dComp.unidadeOrgao || dComp.unidadeSubrogada || {};
+        const cod = u.codigoUnidade || dComp.codigoUnidadeCompradora || "";
+        const nom = u.nomeUnidade || dComp.nomeUnidadeCompradora || "";
+        if (cod || nom) {
+          unidadeCompradora = cod && nom ? `${cod} - ${nom}` : (nom || cod);
+        }
+        if (cod) {
+          uasg = cod;
+        }
+      }
+    } catch {
+      // Ignora falha de consulta direta
+    }
+
+    // Se itens vieram vazios do banco, tenta buscar direto na API do PNCP
+    if (itens.length === 0) {
+      try {
+        const pncpItensRes = await fetch(
+          `https://pncp.gov.br/api/pncp/v1/orgaos/${cnpj}/compras/${ano}/${sequencial}/itens?pagina=1&tamanhoPagina=100`,
+          {
+            headers: { Accept: "application/json", "User-Agent": "RadarLicitacoes/1.0" },
+            signal: AbortSignal.timeout(5000),
+          },
+        );
+        if (pncpItensRes.ok) {
+          const pncpItensData = await pncpItensRes.json();
+          const list = Array.isArray(pncpItensData)
+            ? pncpItensData
+            : Array.isArray(pncpItensData?.data)
+              ? pncpItensData.data
+              : [];
+          if (list.length > 0) {
+            itens = list.map((it: any) => ({
+              numeroItem: it.numeroItem ?? null,
+              titulo: it.descricao ?? it.descricaoItem ?? it.especificacao ?? it.titulo ?? null,
+              descricao: it.descricao ?? it.descricaoItem ?? it.especificacao ?? it.titulo ?? null,
+              quantidade: typeof it.quantidade === "number" ? it.quantidade : null,
+              unidade: it.unidadeMedida ?? null,
+              valorUnitario:
+                typeof it.valorUnitarioEstimado === "number" ? it.valorUnitarioEstimado : null,
+              valorTotal: typeof it.valorTotal === "number" ? it.valorTotal : null,
+            }));
+          }
+        }
+      } catch (err) {
+        console.warn("[source] Falha na consulta de itens PNCP direta:", err);
+      }
+    }
+
+    // Se documentos vieram vazios, tenta buscar na API de arquivos do PNCP
+    if (documentos.length === 0) {
+      try {
+        const pncpDocsRes = await fetch(
+          `https://pncp.gov.br/api/pncp/v1/orgaos/${cnpj}/compras/${ano}/${sequencial}/arquivos?pagina=1&tamanhoPagina=50`,
+          {
+            headers: { Accept: "application/json", "User-Agent": "RadarLicitacoes/1.0" },
+            signal: AbortSignal.timeout(5000),
+          },
+        );
+        if (pncpDocsRes.ok) {
+          const pncpDocsData = await pncpDocsRes.json();
+          const list = Array.isArray(pncpDocsData)
+            ? pncpDocsData
+            : Array.isArray(pncpDocsData?.data)
+              ? pncpDocsData.data
+              : [];
+          if (list.length > 0) {
+            documentos = list.map((doc: any) => ({
+              id: doc.sequencialDocumento ?? doc.id,
+              sequencial: doc.sequencialDocumento ?? null,
+              titulo: doc.titulo ?? doc.tipoDocumentoNome ?? "Documento",
+              tipoNome: doc.tipoDocumentoNome ?? null,
+              url: doc.url ?? `https://pncp.gov.br/api/pncp/v1/orgaos/${cnpj}/compras/${ano}/${sequencial}/arquivos/${doc.sequencialDocumento}`,
+              dataPublicacao: doc.dataPublicacaoPncp ?? null,
+            }));
+          }
+        }
+      } catch (err) {
+        console.warn("[source] Falha na consulta de documentos PNCP direta:", err);
+      }
+    }
+  }
+
+  // Se itens continuam vazios mas temos quantidadeItens ou valorEstimado da licitacao,
+  // ou se itens não foram cadastrados separadamente, criamos o Item Geral / Objeto Principal
+  if (itens.length === 0 && (licitacao.resumo || licitacao.titulo)) {
+    itens = [
+      {
+        numeroItem: 1,
+        titulo: licitacao.titulo,
+        descricao: licitacao.resumo ?? licitacao.titulo,
+        quantidade: licitacao.quantidadeItens ?? 1,
+        unidade: "UN",
+        valorUnitario: licitacao.valorEstimado,
+        valorTotal: licitacao.valorEstimado,
+      },
+    ];
+  }
+
+  // Se documentos continuam vazios e temos linkPncp ou linkSistemaOrigem,
+  // fornecemos o Edital e Anexos oficiais referenciados
+  if (documentos.length === 0) {
+    if (licitacao.linkPncp) {
+      documentos.push({
+        titulo: "Edital e Anexos (Página Oficial PNCP)",
+        tipoNome: "Edital / Anexos",
+        url: licitacao.linkPncp,
+        dataPublicacao: licitacao.dataPublicacao,
+      });
+    }
+    if (licitacao.linkSistemaOrigem) {
+      documentos.push({
+        titulo: `Acesso no ${licitacao.portalNome ?? "Sistema de Origem"}`,
+        tipoNome: "Portal de Disputa",
+        url: licitacao.linkSistemaOrigem,
+        dataPublicacao: licitacao.dataPublicacao,
+      });
+    }
+  }
 
   return {
-    licitacao: mapRow(rows[0]),
-    itens: itRows.map((r) => ({
-      numeroItem: r.numero_item ?? null,
-      titulo: r.titulo ?? null,
-      descricao: r.descricao ?? null,
-      quantidade: typeof r.quantidade === "number" ? r.quantidade : null,
-      unidade: r.unidade ?? null,
-      valorUnitario: typeof r.valor_unitario === "number" ? r.valor_unitario : null,
-      valorTotal: typeof r.valor_total === "number" ? r.valor_total : null,
-    })),
+    licitacao,
+    itens,
+    documentos,
+    unidadeCompradora,
   };
+}
+
+/** Extrai CNPJ, Ano e Sequencial do número de controle PNCP ou linkPncp */
+function parsePncpControlNumber(
+  numeroControle: string,
+  linkPncp?: string | null,
+): { cnpj: string; ano: string; sequencial: string } | null {
+  // Padrão 1: 13230982000150-1-000107/2023 ou 13230982000150-1-107/2023
+  const matchCtrl = (numeroControle || "").match(/^(\d{14})-[0-9]+-(\d+)\/(\d{4})/);
+  if (matchCtrl) {
+    const [, cnpj, seqRaw, ano] = matchCtrl;
+    const sequencial = String(parseInt(seqRaw, 10)); // sem zeros à esquerda
+    return { cnpj, ano, sequencial };
+  }
+
+  // Padrão 2: linkPncp ex: https://pncp.gov.br/app/editais/13230982000150/2023/107
+  if (linkPncp) {
+    const matchLink = linkPncp.match(/(?:editais|compras)\/(\d{14})\/(\d{4})\/(\d+)/);
+    if (matchLink) {
+      const [, cnpj, ano, seqRaw] = matchLink;
+      const sequencial = String(parseInt(seqRaw, 10));
+      return { cnpj, ano, sequencial };
+    }
+  }
+
+  return null;
 }
 
 /** Facetas dinâmicas: quais UFs / modalidades / portais existem nas abertas agora. */

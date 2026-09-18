@@ -25,10 +25,11 @@ interface FilterDockProps {
   facets: Facets;
   onChange: (f: FilterState) => void;
   onReset: () => void;
+  onShowAll?: () => void;
   onSaveSearch: () => void;
 }
 
-export function FilterDock({ filters, facets, onChange, onReset, onSaveSearch }: FilterDockProps) {
+export function FilterDock({ filters, facets, onChange, onReset, onShowAll, onSaveSearch }: FilterDockProps) {
   const set = <K extends keyof FilterState>(key: K, value: FilterState[K]) =>
     onChange({ ...filters, [key]: value });
 
@@ -45,6 +46,18 @@ export function FilterDock({ filters, facets, onChange, onReset, onSaveSearch }:
 
   const applyPreset = (dias: number) => {
     const hoje = new Date();
+    if (dias === 1) {
+      // Opção "Amanhã": propostas com encerramento amanhã
+      const amanha = new Date();
+      amanha.setDate(amanha.getDate() + 1);
+      const dataStr = toISODateInput(amanha);
+      onChange({
+        ...filters,
+        encerramentoDe: dataStr,
+        encerramentoAte: dataStr,
+      });
+      return;
+    }
     const fim = new Date();
     fim.setDate(fim.getDate() + dias);
     fim.setHours(23, 59, 59, 0);
@@ -62,19 +75,8 @@ export function FilterDock({ filters, facets, onChange, onReset, onSaveSearch }:
 
   return (
     <div className="glass rounded-2xl p-4 shadow-2xl shadow-black/40 sm:p-5">
-      {/* linha 1 — busca */}
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-fog" style={{ width: 18, height: 18 }} />
-        <input
-          value={filters.q}
-          onChange={(e) => set("q", e.target.value)}
-          placeholder="Buscar por objeto, órgão ou palavra-chave… ex.: uniformes, ambulância, prefeitura"
-          className="h-12 w-full rounded-xl border border-line bg-ink-2/70 pl-11 pr-4 text-[15px] text-white placeholder:text-fog/55 transition-colors focus:border-signal/50"
-        />
-      </div>
-
-      {/* linha 2 — localização + classificação */}
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {/* localização + classificação */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div>
           <FieldLabel icon={MapPin}>UF</FieldLabel>
           <select
@@ -123,7 +125,7 @@ export function FilterDock({ filters, facets, onChange, onReset, onSaveSearch }:
         </div>
       </div>
 
-      {/* linha 3 — prazo + valor + ordenação */}
+      {/* prazo + valor + ações */}
       <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-12">
         <div className="lg:col-span-4">
           <FieldLabel icon={CalendarClock}>Fim do recebimento de propostas</FieldLabel>
@@ -146,9 +148,13 @@ export function FilterDock({ filters, facets, onChange, onReset, onSaveSearch }:
           </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {PRESETS_PRAZO.map((p) => {
+              const targetDate = new Date();
+              targetDate.setDate(targetDate.getDate() + p.dias);
+              const targetDateStr = toISODateInput(targetDate);
               const active =
-                filters.encerramentoAte &&
-                toISODateInput(new Date(Date.now() + p.dias * 86400000)) === filters.encerramentoAte;
+                p.dias === 1
+                  ? filters.encerramentoDe === targetDateStr && filters.encerramentoAte === targetDateStr
+                  : filters.encerramentoAte === targetDateStr;
               return (
                 <button
                   key={p.label}
@@ -188,21 +194,7 @@ export function FilterDock({ filters, facets, onChange, onReset, onSaveSearch }:
           </div>
         </div>
 
-        <div className="lg:col-span-3">
-          <FieldLabel icon={ArrowUpDown}>Ordenar por</FieldLabel>
-          <select
-            value={filters.sort}
-            onChange={(e) => set("sort", e.target.value as FilterState["sort"])}
-            className="h-10 w-full appearance-none rounded-lg border border-line bg-panel-2/80 px-3 text-sm text-mist"
-          >
-            <option value="encerramento_asc">Encerramento mais próximo</option>
-            <option value="encerramento_desc">Encerramento mais distante</option>
-            <option value="publicacao_desc">Publicação mais recente</option>
-            <option value="valor_desc">Maior valor estimado</option>
-          </select>
-        </div>
-
-        <div className="flex items-end gap-2 lg:col-span-2">
+        <div className="flex items-end gap-2 lg:col-span-5">
           <button
             type="button"
             onClick={onReset}
