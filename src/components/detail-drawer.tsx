@@ -2,25 +2,18 @@ function formatUnidadeCompradora(orgao?: string | null, id?: string | null, link
   let uasg = "";
   if (linkSistemaOrigem) {
     const mu =
-      linkSistemaOrigem.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|uo)=(\d+)/i) ||
-      linkSistemaOrigem.match(/uasg\/(\d+)/i);
+      linkSistemaOrigem.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|uo)=(\d{5,6})/i) ||
+      linkSistemaOrigem.match(/uasg\/(\d{5,6})/i) ||
+      linkSistemaOrigem.match(/(?:uasg|codigouasg|co_uasg)=(\d+)/i);
     if (mu) uasg = mu[1];
-  }
-  if (!uasg && id) {
-    const mPncp = (id || "").match(/^(\d{14})-[0-9]+-(\d+)\/(\d{4})/);
-    if (mPncp) uasg = mPncp[1];
-  }
-  if (!uasg && linkPncp) {
-    const ml = linkPncp.match(/(?:editais|compras)\/(\d{14})\//);
-    if (ml) uasg = ml[1];
   }
 
   const nome = (orgao || "").trim();
   if (uasg && nome) {
     if (nome.startsWith(uasg)) return nome;
-    return `UASG ${uasg} - ${nome}`;
+    return `${uasg} - ${nome}`;
   }
-  if (uasg) return `UASG ${uasg}`;
+  if (uasg) return uasg;
   return nome || "—";
 }
 
@@ -180,6 +173,13 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                     {detail?.unidadeCompradora ?? formatUnidadeCompradora(l.orgao, l.id, l.linkPncp, l.linkSistemaOrigem)}
                   </span>
                 </Info>
+                {(detail?.unidadeCompradora?.match(/^(\d{5,6})\s*-\s*(.+)$/) || l.linkSistemaOrigem?.match(/(?:uasg|codigouasg|co_uasg)=(\d{5,6})/i)) && (
+                  <Info label="UASG" icon={Receipt}>
+                    <span className="font-mono font-semibold text-white">
+                      {detail?.unidadeCompradora?.match(/^(\d{5,6})\s*-\s*(.+)$/)?.[1] ?? l.linkSistemaOrigem?.match(/(?:uasg|codigouasg|co_uasg)=(\d{5,6})/i)?.[1]}
+                    </span>
+                  </Info>
+                )}
                 <Info label="Fonte" icon={Radar}>
                   {l.portalNome ?? "PNCP"}
                 </Info>

@@ -417,25 +417,20 @@ footer .fb{border-top:1px solid rgba(28,37,48,.5);padding:1rem;text-align:center
 function parseUasgAndUnidade(orgao, id, linkPncp, linkSistemaOrigem, unidadeNome){
   let uasg = "";
   if(linkSistemaOrigem){
-    const mu = linkSistemaOrigem.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|uo)=(\d+)/i) || linkSistemaOrigem.match(/uasg\/(\d+)/i);
+    // UASG tem tradicionalmente 5 ou 6 dígitos
+    const mu = linkSistemaOrigem.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|uo)=(\d{5,6})/i) ||
+               linkSistemaOrigem.match(/uasg\/(\d{5,6})/i) ||
+               linkSistemaOrigem.match(/(?:uasg|codigouasg|co_uasg)=(\d+)/i);
     if(mu) uasg = mu[1];
-  }
-  if(!uasg && id){
-    // Exemplo Comprasnet / PNCP: CNPJ ou código do órgão
-    const mPncp = (id||"").match(/^(\d{14})-[0-9]+-(\d+)\/(\d{4})/);
-    if(mPncp) uasg = mPncp[1];
-  }
-  if(!uasg && linkPncp){
-    const ml = linkPncp.match(/(?:editais|compras)\/(\d{14})\//);
-    if(ml) uasg = ml[1];
   }
 
   const nome = (unidadeNome || orgao || "").trim();
+  // Se encontrou a UASG legítima (ex: 783200)
   if(uasg && nome){
     if(nome.startsWith(uasg)) return nome;
-    return "UASG " + uasg + " - " + nome;
+    return uasg + " - " + nome;
   }
-  if(uasg) return "UASG " + uasg;
+  if(uasg) return uasg;
   return nome || "—";
 }
 
@@ -670,16 +665,22 @@ async function fetchDetail(id, linkPncp, linkSistemaOrigem){
   }
 
   let unidadeCompradoraApi = null;
+  let uasgApi = null;
   if(cnpj && ano && seq){
     try{
-      const rComp = await fetch("https://pncp.gov.br/api/pncp/v1/orgaos/"+cnpj+"/compras/"+ano+"/"+seq, {headers:{Accept:"application/json"},signal:AbortSignal.timeout(5000)});
+      const rComp = await fetch("https://pncp.gov.br/api/pncp/v1/orgaos/"+cnpj+"/compras/"+ano+"/"+seq, {headers:{Accept:"application/json"},signal:AbortSignal.timeout(6000)});
       if(rComp.ok){
         const dComp = await rComp.json();
         const u = dComp.unidadeOrgao || dComp.unidadeSubrogada || {};
         const uCod = u.codigoUnidade || dComp.codigoUnidadeCompradora || "";
         const uNom = u.nomeUnidade || dComp.nomeUnidadeCompradora || "";
-        if(uCod || uNom){
-          unidadeCompradoraApi = (uCod ? "UASG " + uCod + " - " : "") + (uNom || "");
+        if(uCod) uasgApi = uCod;
+        if(uCod && uNom){
+          unidadeCompradoraApi = uCod + " - " + uNom;
+        } else if(uNom){
+          unidadeCompradoraApi = uNom;
+        } else if(uCod){
+          unidadeCompradoraApi = uCod;
         }
       }
     }catch(e){}
@@ -756,7 +757,7 @@ async function fetchDetail(id, linkPncp, linkSistemaOrigem){
     }
   }
 
-  return {licitacao, itens:items, documentos, unidadeCompradora: unidadeCompradoraApi};
+  return {licitacao, itens:items, documentos, unidadeCompradora: unidadeCompradoraApi, uasg: uasgApi};
 }
 
 async function fetchFacets(){
@@ -1058,6 +1059,7 @@ function openDrawer(l){
       '<div class="ddl-box tone-'+dl.tone+'"><div><p class="lbl">'+I.cal+'Fim do recebimento de propostas</p><p class="val" style="font-weight:600">'+fmtDT(l.dataEncerramento)+'</p></div><p class="big">'+dl.label+'</p></div>'+
       '<dl class="dgrid">'+
         '<div class="dcell full"><dt>'+I.landmark+'Unidade compradora</dt><dd id="uc-txt" style="font-weight:600;color:#fff">'+esc(parseUasgAndUnidade(l.orgao, l.id, l.linkPncp, l.linkSistemaOrigem))+'</dd></div>'+
+        '<div class="dcell" id="uasg-cell" style="display:none"><dt>'+I.receipt+'UASG</dt><dd id="uasg-txt" class="fm" style="font-weight:600;color:#fff">—</dd></div>'+
         '<div class="dcell"><dt>'+I.radar+'Fonte</dt><dd>'+esc(l.portalNome||"PNCP")+'</dd></div>'+
         '<div class="dcell"><dt>'+I.pin+'Localidade</dt><dd>'+esc(l.municipio||"—")+(l.uf?" / "+esc(l.uf):"")+'</dd></div>'+
         '<div class="dcell"><dt>Esfera</dt><dd>'+esc(l.esfera?(ESFERA[l.esfera]||l.esfera):"—")+'</dd></div>'+
@@ -1092,6 +1094,22 @@ function openDrawer(l){
     if(d&&d.unidadeCompradora){
       const ucEl=$("#uc-txt");
       if(ucEl) ucEl.textContent = d.unidadeCompradora;
+    }
+    const uasgVal = (d&&d.uasg) || (function(){
+      if(l.linkSistemaOrigem){
+        const mu = l.linkSistemaOrigem.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|uo)=(\d{5,6})/i) ||
+                   l.linkSistemaOrigem.match(/uasg\/(\d{5,6})/i) ||
+                   l.linkSistemaOrigem.match(/(?:uasg|codigouasg|co_uasg)=(\d+)/i);
+        if(mu) return mu[1];
+      }
+      return "";
+    })();
+    if(uasgVal){
+      const uasgCell=$("#uasg-cell"), uasgTxt=$("#uasg-txt");
+      if(uasgCell&&uasgTxt){
+        uasgTxt.textContent = uasgVal;
+        uasgCell.style.display = "block";
+      }
     }
     const z=$("#itens-zone");
     const its=(d&&d.itens)||[];
