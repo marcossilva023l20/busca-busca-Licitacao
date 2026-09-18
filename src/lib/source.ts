@@ -418,8 +418,8 @@ export async function getLicitacaoDetail(id: string): Promise<LicitacaoDetail> {
           if (list.length > 0) {
             itens = list.map((it: any) => ({
               numeroItem: it.numeroItem ?? null,
-              titulo: it.descricao ?? it.titulo ?? null,
-              descricao: it.descricao ?? null,
+              titulo: it.descricao ?? it.descricaoItem ?? it.especificacao ?? it.titulo ?? null,
+              descricao: it.descricao ?? it.descricaoItem ?? it.especificacao ?? it.titulo ?? null,
               quantidade: typeof it.quantidade === "number" ? it.quantidade : null,
               unidade: it.unidadeMedida ?? null,
               valorUnitario:

@@ -1,3 +1,29 @@
+function formatUnidadeCompradora(orgao?: string | null, id?: string | null, linkPncp?: string | null, linkSistemaOrigem?: string | null) {
+  let uasg = "";
+  if (linkSistemaOrigem) {
+    const mu =
+      linkSistemaOrigem.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|uo)=(\d+)/i) ||
+      linkSistemaOrigem.match(/uasg\/(\d+)/i);
+    if (mu) uasg = mu[1];
+  }
+  if (!uasg && id) {
+    const mPncp = (id || "").match(/^(\d{14})-[0-9]+-(\d+)\/(\d{4})/);
+    if (mPncp) uasg = mPncp[1];
+  }
+  if (!uasg && linkPncp) {
+    const ml = linkPncp.match(/(?:editais|compras)\/(\d{14})\//);
+    if (ml) uasg = ml[1];
+  }
+
+  const nome = (orgao || "").trim();
+  if (uasg && nome) {
+    if (nome.startsWith(uasg)) return nome;
+    return `${uasg} - ${nome}`;
+  }
+  if (uasg) return uasg;
+  return nome || "—";
+}
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -150,7 +176,9 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
               {/* grade de infos */}
               <dl className="mt-5 grid grid-cols-2 gap-3">
                 <Info label="Unidade compradora" icon={Landmark} full>
-                  <span className="font-semibold text-white">{l.orgao ?? "—"}</span>
+                  <span className="font-semibold text-white">
+                    {formatUnidadeCompradora(l.orgao, l.id, l.linkPncp, l.linkSistemaOrigem)}
+                  </span>
                 </Info>
                 <Info label="Fonte" icon={Radar}>
                   {l.portalNome ?? "PNCP"}
@@ -259,7 +287,12 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                           <tr key={idx} className="border-b border-line/50 last:border-0 hover:bg-white/[0.03]">
                             <td className="font-mono px-3 py-2 text-fog">{it.numeroItem ?? idx + 1}</td>
                             <td className="px-3 py-2 text-mist">
-                              <p className="line-clamp-2">{it.titulo ?? it.descricao ?? "—"}</p>
+                              <p className="line-clamp-2 font-medium text-white">
+                                {it.descricao ?? it.titulo ?? l.resumo ?? l.titulo ?? "—"}
+                              </p>
+                              {it.titulo && it.descricao && it.titulo !== it.descricao && (
+                                <p className="line-clamp-1 mt-0.5 text-[11px] text-fog">{it.titulo}</p>
+                              )}
                             </td>
                             <td className="font-mono px-3 py-2 text-right text-fog">
                               {it.quantidade != null ? `${it.quantidade} ${it.unidade ?? ""}` : "—"}
