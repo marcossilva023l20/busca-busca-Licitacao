@@ -170,9 +170,7 @@ select.field option{background:var(--panel2);color:var(--mist)}
 .csv-btn:disabled{opacity:.4;cursor:not-allowed}
 
 /* cards */
-.grid-cards{display:grid;grid-template-columns:1fr;gap:1rem}
-@media(min-width:768px){.grid-cards{grid-template-columns:repeat(2,1fr)}}
-@media(min-width:1200px){.grid-cards{grid-template-columns:repeat(3,1fr)}}
+.grid-cards{display:grid;grid-template-columns:1fr;gap:1.25rem;max-width:960px;margin:0 auto}
 .card{position:relative;display:flex;height:100%;cursor:pointer;flex-direction:column;border-radius:16px;border:1px solid var(--line);background:rgba(12,17,23,.8);padding:1.25rem;transition:transform .35s cubic-bezier(.22,1,.36,1),border-color .3s,box-shadow .4s;animation:fadeUp .45s both}
 .card:hover{transform:translateY(-4px);border-color:rgba(163,230,53,.45);box-shadow:0 18px 44px -18px rgba(163,230,53,.16),0 8px 28px -12px rgba(0,0,0,.7)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
@@ -184,8 +182,10 @@ select.field option{background:var(--panel2);color:var(--mist)}
 .heart{border:1px solid var(--line);background:none;border-radius:999px;padding:.4rem;color:var(--fog);transition:.2s;display:flex}
 .heart:hover{border-color:rgba(248,113,113,.4);color:#f87171}
 .heart.on{border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.1);color:#f87171}
-.card h3{font-family:var(--fd);margin-top:.75rem;font-size:15.5px;font-weight:600;line-height:1.4;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:.2s}
+.card h3{font-family:var(--fd);margin-top:.75rem;font-size:17px;font-weight:700;line-height:1.4;color:#fff;transition:.2s}
 .card:hover h3{color:#ecfccb}
+.card-objeto{margin-top:.85rem;padding:.9rem 1.1rem;border-radius:12px;background:rgba(17,23,34,.75);border:1px solid rgba(42,54,68,.7);font-size:13.5px;line-height:1.6;color:#e2e8f0;white-space:pre-wrap;word-break:break-word}
+.card-objeto .obj-lbl{display:flex;align-items:center;gap:.35rem;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--signal);margin-bottom:.35rem}
 .meta{margin-top:.6rem;font-size:12.5px;color:var(--fog);display:grid;gap:.25rem}
 .meta p{display:flex;align-items:flex-start;gap:.4rem}
 .meta svg{margin-top:2px;flex-shrink:0;color:rgba(139,152,169,.7)}
@@ -470,7 +470,7 @@ function parseUasgAndUnidade(orgao, id, linkPncp, linkSistemaOrigem, unidadeNome
 const SB_URL = "https://kkudnnbuzljloenwcjsa.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrdWRubmJ1emxqbG9lbndjanNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2MTU2NjQsImV4cCI6MjA4NzE5MTY2NH0.ETcqBjr_9_WAludecUC4IBVjlAjIJZogTpXt-hG0koY";
 const REST = SB_URL + "/rest/v1";
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 1;
 
 const UFS = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"];
 const MODALIDADES = [
@@ -566,7 +566,7 @@ const favIds = () => new Set(favorites.map(f=>f.id));
 /* LISTAGEM vai "leve" (sem `resumo`): ordenar páginas com todas as colunas
    textuais em consultas abrangentes estoura o statement timeout do PostgREST.
    O `resumo` (seção "Objeto") chega pelo fetchDetail. */
-const COLS_LIST = ["numero_controle_pncp","titulo","orgao_entidade","uf","municipio","modalidade_id","modalidade_nome","modo_disputa","portal_key","portal_nome","status","srp","orcamento_sigiloso","valor_estimado","data_abertura","data_publicacao","data_encerramento","link_pncp","link_sistema_origem","slug","esfera","quantidade_itens"].join(",");
+const COLS_LIST = ["numero_controle_pncp","resumo","titulo","orgao_entidade","uf","municipio","modalidade_id","modalidade_nome","modo_disputa","portal_key","portal_nome","status","srp","orcamento_sigiloso","valor_estimado","data_abertura","data_publicacao","data_encerramento","link_pncp","link_sistema_origem","slug","esfera","quantidade_itens"].join(",");
 const COLS_FULL = "resumo," + COLS_LIST;
 function sbHeaders(extra){ return Object.assign({"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Accept":"application/json"},extra||{}); }
 function mapRow(r){ return {
@@ -1042,7 +1042,8 @@ function renderGrid(){
       '<div class="card-top"><div class="badges">'+portalBadge(l)+(l.modalidadeNome?'<span class="badge badge-mod">'+esc(l.modalidadeNome)+'</span>':"")+'</div>'+
       '<button type="button" class="heart'+(isFav?" on":"")+'" data-fav="'+esc(l.id)+'" aria-label="Favoritar">'+I.heart+'</button></div>'+
       '<h3>'+esc(l.titulo)+'</h3>'+
-      '<div class="meta"><p>'+I.landmark+'<span class="clamp2">'+esc(l.orgao||"Órgão não informado")+'</span></p>'+
+      (l.resumo ? '<div class="card-objeto"><p class="obj-lbl">'+I.file+'Descrição Completa do Objeto</p><p class="obj-content">'+esc(l.resumo)+'</p></div>' : '<div class="card-objeto"><p class="obj-lbl">'+I.file+'Descrição do Objeto</p><p class="obj-content">'+esc(l.titulo)+'</p></div>')+
+      '<div class="meta" style="margin-top:1rem"><p>'+I.landmark+'<span class="clamp2">'+esc(l.orgao||"Órgão não informado")+'</span></p>'+'   <p>'+I.receipt+'<span>UASG: <strong>'+(esc(extractUasg(l, null)) || '—')+'</strong></span></p>'+
       '<p>'+I.pin+'<span>'+esc(l.municipio||"—")+(l.uf?" · "+esc(l.uf):"")+'</span></p></div>'+
       '<div class="card-foot"><div><p class="lbl">'+I.cal+'Encerramento</p><p class="val">'+fmtDate(l.dataEncerramento)+'</p></div>'+
       '<div style="text-align:right"><p class="lbl" style="justify-content:flex-end">Valor estimado</p><p class="val money">'+(l.orcamentoSigiloso?"Sigiloso":fmtBRLc(l.valorEstimado))+'</p></div></div>'+

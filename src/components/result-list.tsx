@@ -8,6 +8,7 @@ import {
   Database,
   Download,
   FileSearch,
+  FileText,
   Heart,
   Landmark,
   MapPin,
@@ -40,7 +41,7 @@ export function ResultList({ result, loading, error, favorites, onToggleFavorite
 
   if (loading && !result) {
     return (
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="mx-auto max-w-4xl grid grid-cols-1 gap-5">
         {Array.from({ length: 9 }).map((_, i) => (
           <SkeletonCard key={i} />
         ))}
@@ -64,7 +65,7 @@ export function ResultList({ result, loading, error, favorites, onToggleFavorite
 
   return (
     <>
-      <div className={`grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 ${loading ? "opacity-50 transition-opacity" : ""}`}>
+      <div className={`mx-auto max-w-4xl grid grid-cols-1 gap-5 ${loading ? "opacity-50 transition-opacity" : ""}`}>
         {result.items.map((l, i) => (
           <motion.div
             key={l.id || i}
@@ -139,9 +140,18 @@ function LicitacaoCard({
       </div>
 
       {/* título */}
-      <h3 className="clamp-2 font-display mt-3 text-[15.5px] font-semibold leading-snug text-white transition-colors group-hover:text-lime-100">
+      <h3 className="font-display mt-3 text-[17px] font-bold leading-snug text-white transition-colors group-hover:text-lime-100">
         {l.titulo}
       </h3>
+
+      {/* Descrição Completa do Objeto */}
+      <div className="mt-3 rounded-xl border border-line-2/70 bg-panel-2/80 p-3.5 text-[13.5px] leading-relaxed text-slate-200">
+        <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-signal mb-1.5">
+          <FileText className="h-3.5 w-3.5 text-signal" />
+          Descrição Completa do Objeto
+        </p>
+        <p className="whitespace-pre-wrap break-words">{l.resumo || l.titulo}</p>
+      </div>
 
       {/* órgão / local */}
       <div className="mt-2.5 space-y-1 text-[12.5px] text-fog">

@@ -55,4 +55,4 @@ export const PRESETS_PRAZO = [
   { label: "30 dias", dias: 30 },
 ] as const;
 
-export const PAGE_SIZE = 24;
+export const PAGE_SIZE = 1;

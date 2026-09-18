@@ -51,6 +51,7 @@ export interface SearchParams {
  *  consultas abrangentes). O `resumo` chega via getLicitacaoDetail. */
 const SELECT_COLS_LIST = [
   "numero_controle_pncp",
+  "resumo",
   "titulo",
   "orgao_entidade",
   "uf",
