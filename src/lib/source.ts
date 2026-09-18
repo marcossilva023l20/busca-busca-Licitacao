@@ -395,8 +395,30 @@ export async function getLicitacaoDetail(id: string): Promise<LicitacaoDetail> {
   // Exemplo de id: "13230982000150-1-000107/2023" ou linkPncp: ".../editais/13230982000150/2023/107"
   const pncp = pncpParams ?? parsePncpControlNumber(licitacao.id, licitacao.linkPncp);
 
+  let unidadeCompradora: string | null = null;
   if (pncp) {
     const { cnpj, ano, sequencial } = pncp;
+
+    try {
+      const compRes = await fetch(
+        `https://pncp.gov.br/api/pncp/v1/orgaos/${cnpj}/compras/${ano}/${sequencial}`,
+        {
+          headers: { Accept: "application/json", "User-Agent": "RadarLicitacoes/1.0" },
+          signal: AbortSignal.timeout(5000),
+        },
+      );
+      if (compRes.ok) {
+        const dComp = await compRes.json();
+        const u = dComp.unidadeOrgao || dComp.unidadeSubrogada || {};
+        const cod = u.codigoUnidade || dComp.codigoUnidadeCompradora || "";
+        const nom = u.nomeUnidade || dComp.nomeUnidadeCompradora || "";
+        if (cod || nom) {
+          unidadeCompradora = `${cod ? `UASG ${cod} - ` : ""}${nom || ""}`.trim();
+        }
+      }
+    } catch {
+      // Ignora falha de consulta direta
+    }
 
     // Se itens vieram vazios do banco, tenta buscar direto na API do PNCP
     if (itens.length === 0) {
@@ -508,6 +530,7 @@ export async function getLicitacaoDetail(id: string): Promise<LicitacaoDetail> {
     licitacao,
     itens,
     documentos,
+    unidadeCompradora,
   };
 }
 

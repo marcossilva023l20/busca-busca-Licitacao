@@ -18,9 +18,9 @@ function formatUnidadeCompradora(orgao?: string | null, id?: string | null, link
   const nome = (orgao || "").trim();
   if (uasg && nome) {
     if (nome.startsWith(uasg)) return nome;
-    return `${uasg} - ${nome}`;
+    return `UASG ${uasg} - ${nome}`;
   }
-  if (uasg) return uasg;
+  if (uasg) return `UASG ${uasg}`;
   return nome || "—";
 }
 
@@ -177,7 +177,7 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
               <dl className="mt-5 grid grid-cols-2 gap-3">
                 <Info label="Unidade compradora" icon={Landmark} full>
                   <span className="font-semibold text-white">
-                    {formatUnidadeCompradora(l.orgao, l.id, l.linkPncp, l.linkSistemaOrigem)}
+                    {detail?.unidadeCompradora ?? formatUnidadeCompradora(l.orgao, l.id, l.linkPncp, l.linkSistemaOrigem)}
                   </span>
                 </Info>
                 <Info label="Fonte" icon={Radar}>

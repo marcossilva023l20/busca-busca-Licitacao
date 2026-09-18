@@ -1,10 +1,11 @@
-function formatUnidadeCompradora(orgao, id, linkPncp, linkSistemaOrigem){
+function parseUasgAndUnidade(orgao, id, linkPncp, linkSistemaOrigem, unidadeNome){
   let uasg = "";
   if(linkSistemaOrigem){
     const mu = linkSistemaOrigem.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|uo)=(\d+)/i) || linkSistemaOrigem.match(/uasg\/(\d+)/i);
     if(mu) uasg = mu[1];
   }
   if(!uasg && id){
+    // Exemplo Comprasnet / PNCP: CNPJ ou código do órgão
     const mPncp = (id||"").match(/^(\d{14})-[0-9]+-(\d+)\/(\d{4})/);
     if(mPncp) uasg = mPncp[1];
   }
@@ -13,12 +14,12 @@ function formatUnidadeCompradora(orgao, id, linkPncp, linkSistemaOrigem){
     if(ml) uasg = ml[1];
   }
 
-  const nome = (orgao || "").trim();
+  const nome = (unidadeNome || orgao || "").trim();
   if(uasg && nome){
     if(nome.startsWith(uasg)) return nome;
-    return uasg + " - " + nome;
+    return "UASG " + uasg + " - " + nome;
   }
-  if(uasg) return uasg;
+  if(uasg) return "UASG " + uasg;
   return nome || "—";
 }
 
@@ -668,7 +669,21 @@ async function fetchDetail(id, linkPncp, linkSistemaOrigem){
     if(ml){ cnpj=ml[1]; ano=ml[2]; seq=String(parseInt(ml[3],10)); }
   }
 
+  let unidadeCompradoraApi = null;
   if(cnpj && ano && seq){
+    try{
+      const rComp = await fetch("https://pncp.gov.br/api/pncp/v1/orgaos/"+cnpj+"/compras/"+ano+"/"+seq, {headers:{Accept:"application/json"},signal:AbortSignal.timeout(5000)});
+      if(rComp.ok){
+        const dComp = await rComp.json();
+        const u = dComp.unidadeOrgao || dComp.unidadeSubrogada || {};
+        const uCod = u.codigoUnidade || dComp.codigoUnidadeCompradora || "";
+        const uNom = u.nomeUnidade || dComp.nomeUnidadeCompradora || "";
+        if(uCod || uNom){
+          unidadeCompradoraApi = (uCod ? "UASG " + uCod + " - " : "") + (uNom || "");
+        }
+      }
+    }catch(e){}
+
     if(!items.length){
       try{
         const rIt=await fetch("https://pncp.gov.br/api/pncp/v1/orgaos/"+cnpj+"/compras/"+ano+"/"+seq+"/itens?pagina=1&tamanhoPagina=100",{headers:{Accept:"application/json"},signal:AbortSignal.timeout(6000)});
@@ -741,7 +756,7 @@ async function fetchDetail(id, linkPncp, linkSistemaOrigem){
     }
   }
 
-  return {licitacao, itens:items, documentos};
+  return {licitacao, itens:items, documentos, unidadeCompradora: unidadeCompradoraApi};
 }
 
 async function fetchFacets(){
@@ -1042,7 +1057,7 @@ function openDrawer(l){
       '<h2>'+esc(l.titulo)+'</h2><p class="pid">'+esc(l.id)+'</p>'+
       '<div class="ddl-box tone-'+dl.tone+'"><div><p class="lbl">'+I.cal+'Fim do recebimento de propostas</p><p class="val" style="font-weight:600">'+fmtDT(l.dataEncerramento)+'</p></div><p class="big">'+dl.label+'</p></div>'+
       '<dl class="dgrid">'+
-        '<div class="dcell full"><dt>'+I.landmark+'Unidade compradora</dt><dd style="font-weight:600;color:#fff">'+esc(formatUnidadeCompradora(l.orgao, l.id, l.linkPncp, l.linkSistemaOrigem))+'</dd></div>'+
+        '<div class="dcell full"><dt>'+I.landmark+'Unidade compradora</dt><dd id="uc-txt" style="font-weight:600;color:#fff">'+esc(parseUasgAndUnidade(l.orgao, l.id, l.linkPncp, l.linkSistemaOrigem))+'</dd></div>'+
         '<div class="dcell"><dt>'+I.radar+'Fonte</dt><dd>'+esc(l.portalNome||"PNCP")+'</dd></div>'+
         '<div class="dcell"><dt>'+I.pin+'Localidade</dt><dd>'+esc(l.municipio||"—")+(l.uf?" / "+esc(l.uf):"")+'</dd></div>'+
         '<div class="dcell"><dt>Esfera</dt><dd>'+esc(l.esfera?(ESFERA[l.esfera]||l.esfera):"—")+'</dd></div>'+
@@ -1073,6 +1088,10 @@ function openDrawer(l){
     if(d&&d.licitacao&&d.licitacao.resumo&&d.licitacao.resumo!==l.titulo){
       const oz=$("#obj-zone"), ot=$("#obj-txt");
       if(oz&&ot){ ot.textContent=d.licitacao.resumo; oz.style.display="block"; }
+    }
+    if(d&&d.unidadeCompradora){
+      const ucEl=$("#uc-txt");
+      if(ucEl) ucEl.textContent = d.unidadeCompradora;
     }
     const z=$("#itens-zone");
     const its=(d&&d.itens)||[];
