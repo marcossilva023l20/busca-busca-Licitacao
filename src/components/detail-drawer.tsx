@@ -1,11 +1,38 @@
+function extractUasg(l: Licitacao, detail?: LicitacaoDetail | null) {
+  if (detail?.uasg) return detail.uasg;
+  const sources = [
+    l.linkSistemaOrigem,
+    l.linkPncp,
+    l.id,
+    l.titulo,
+    l.resumo,
+    detail?.licitacao?.resumo,
+  ];
+  for (const s of sources) {
+    if (!s) continue;
+    const mUrl = s.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|uo)[=/](\d{5,6})/i);
+    if (mUrl) return mUrl[1];
+    const mTxt = s.match(/\b(?:uasg|ug)[\s:.-]*(\d{5,6})\b/i);
+    if (mTxt) return mTxt[1];
+    const mPref = s.match(/\b(?:comprasnet|comprasgov|siasg)[-_](\d{5,6})\b/i);
+    if (mPref) return mPref[1];
+  }
+  return "";
+}
+
 function formatUnidadeCompradora(orgao?: string | null, id?: string | null, linkPncp?: string | null, linkSistemaOrigem?: string | null) {
   let uasg = "";
-  if (linkSistemaOrigem) {
-    const mu =
-      linkSistemaOrigem.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|uo)=(\d{5,6})/i) ||
-      linkSistemaOrigem.match(/uasg\/(\d{5,6})/i) ||
-      linkSistemaOrigem.match(/(?:uasg|codigouasg|co_uasg)=(\d+)/i);
-    if (mu) uasg = mu[1];
+  const sources = [linkSistemaOrigem, linkPncp, id];
+  for (const s of sources) {
+    if (!s) continue;
+    const m =
+      s.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|uo)[=/](\d{5,6})/i) ||
+      s.match(/\b(?:uasg|ug)[\s:.-]*(\d{5,6})\b/i) ||
+      s.match(/\b(?:comprasnet|comprasgov|siasg)[-_](\d{5,6})\b/i);
+    if (m) {
+      uasg = m[1];
+      break;
+    }
   }
 
   const nome = (orgao || "").trim();
@@ -173,13 +200,11 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                     {detail?.unidadeCompradora ?? formatUnidadeCompradora(l.orgao, l.id, l.linkPncp, l.linkSistemaOrigem)}
                   </span>
                 </Info>
-                {(detail?.unidadeCompradora?.match(/^(\d{5,6})\s*-\s*(.+)$/) || l.linkSistemaOrigem?.match(/(?:uasg|codigouasg|co_uasg)=(\d{5,6})/i)) && (
-                  <Info label="UASG" icon={Receipt}>
-                    <span className="font-mono font-semibold text-white">
-                      {detail?.unidadeCompradora?.match(/^(\d{5,6})\s*-\s*(.+)$/)?.[1] ?? l.linkSistemaOrigem?.match(/(?:uasg|codigouasg|co_uasg)=(\d{5,6})/i)?.[1]}
-                    </span>
-                  </Info>
-                )}
+                <Info label="UASG" icon={Receipt}>
+                  <span className="font-mono font-semibold text-lime-200">
+                    {extractUasg(l, detail) || "—"}
+                  </span>
+                </Info>
                 <Info label="Fonte" icon={Radar}>
                   {l.portalNome ?? "PNCP"}
                 </Info>
