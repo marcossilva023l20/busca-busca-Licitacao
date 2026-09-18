@@ -782,6 +782,41 @@ async function fetchDetail(id, linkPncp, linkSistemaOrigem){
     }
   }
 
+  // Fallback: se uasgApi ou unidadeCompradoraApi ainda não foram obtidos,
+  // inspeciona URLs e títulos de documentos retornados
+  if(!uasgApi && documentos.length){
+    for(const doc of documentos){
+      const docStr = (doc.url || "") + " " + (doc.titulo || "");
+      const mu = docStr.match(/(?:uasg|co_uasg|codigouasg)[=/](\d{5,6})/i) ||
+                 docStr.match(/\buasg[\s:.-]*(\d{5,6})\b/i);
+      if(mu){
+        uasgApi = mu[1];
+        break;
+      }
+    }
+  }
+
+  // Fallback na API de busca do PNCP caso a API compras não tenha respondido
+  if(!unidadeCompradoraApi && id){
+    try{
+      const rSearch = await fetch("https://pncp.gov.br/api/search/?q="+encodeURIComponent(id)+"&tipos_documento=edital&tam_pagina=1", {headers:{Accept:"application/json"},signal:AbortSignal.timeout(5000)});
+      if(rSearch.ok){
+        const dS = await rSearch.json();
+        if(dS.items && dS.items.length){
+          const sItem = dS.items[0];
+          const uCod = sItem.unidade_codigo || sItem.codigo_unidade || "";
+          const uNom = sItem.unidade_nome || sItem.nome_unidade || "";
+          if(uCod && !uasgApi) uasgApi = uCod;
+          if(uCod && uNom){
+            unidadeCompradoraApi = uCod + " - " + uNom;
+          } else if(uNom){
+            unidadeCompradoraApi = (uasgApi ? uasgApi + " - " : "") + uNom;
+          }
+        }
+      }
+    }catch(e){}
+  }
+
   return {licitacao, itens:items, documentos, unidadeCompradora: unidadeCompradoraApi, uasg: uasgApi};
 }
 
