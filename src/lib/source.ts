@@ -396,6 +396,7 @@ export async function getLicitacaoDetail(id: string): Promise<LicitacaoDetail> {
   const pncp = pncpParams ?? parsePncpControlNumber(licitacao.id, licitacao.linkPncp);
 
   let unidadeCompradora: string | null = null;
+  let uasg: string | null = null;
   if (pncp) {
     const { cnpj, ano, sequencial } = pncp;
 
@@ -413,7 +414,10 @@ export async function getLicitacaoDetail(id: string): Promise<LicitacaoDetail> {
         const cod = u.codigoUnidade || dComp.codigoUnidadeCompradora || "";
         const nom = u.nomeUnidade || dComp.nomeUnidadeCompradora || "";
         if (cod || nom) {
-          unidadeCompradora = `${cod ? `UASG ${cod} - ` : ""}${nom || ""}`.trim();
+          unidadeCompradora = cod && nom ? `${cod} - ${nom}` : (nom || cod);
+        }
+        if (cod) {
+          uasg = cod;
         }
       }
     } catch {

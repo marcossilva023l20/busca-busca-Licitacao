@@ -48,6 +48,7 @@ export interface LicitacaoDetail {
   itens: LicitacaoItem[];
   documentos: LicitacaoDocumento[];
   unidadeCompradora?: string | null;
+  uasg?: string | null;
 }
 
 export interface SearchResult {

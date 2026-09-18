@@ -1084,7 +1084,7 @@ function openDrawer(l){
       '<div class="ddl-box tone-'+dl.tone+'"><div><p class="lbl">'+I.cal+'Fim do recebimento de propostas</p><p class="val" style="font-weight:600">'+fmtDT(l.dataEncerramento)+'</p></div><p class="big">'+dl.label+'</p></div>'+
       '<dl class="dgrid">'+
         '<div class="dcell full"><dt>'+I.landmark+'Unidade compradora</dt><dd id="uc-txt" style="font-weight:600;color:#fff">'+esc(parseUasgAndUnidade(l.orgao, l.id, l.linkPncp, l.linkSistemaOrigem))+'</dd></div>'+
-        '<div class="dcell" id="uasg-cell"><dt>'+I.receipt+'UASG</dt><dd id="uasg-txt" class="fm" style="font-weight:600;color:#d9f99d">—</dd></div>'+
+        '<div class="dcell" id="uasg-cell"><dt>'+I.receipt+'UASG</dt><dd id="uasg-txt" class="fm" style="font-weight:600;color:#d9f99d">'+(esc(extractUasg(l, null)) || "—")+'</dd></div>'+
         '<div class="dcell"><dt>'+I.radar+'Fonte</dt><dd>'+esc(l.portalNome||"PNCP")+'</dd></div>'+
         '<div class="dcell"><dt>'+I.pin+'Localidade</dt><dd>'+esc(l.municipio||"—")+(l.uf?" / "+esc(l.uf):"")+'</dd></div>'+
         '<div class="dcell"><dt>Esfera</dt><dd>'+esc(l.esfera?(ESFERA[l.esfera]||l.esfera):"—")+'</dd></div>'+
@@ -1118,14 +1118,19 @@ function openDrawer(l){
       const oz=$("#obj-zone"), ot=$("#obj-txt");
       if(oz&&ot){ ot.textContent=d.licitacao.resumo; oz.style.display="block"; }
     }
-    if(d&&d.unidadeCompradora){
-      const ucEl=$("#uc-txt");
-      if(ucEl) ucEl.textContent = d.unidadeCompradora;
-    }
     const uasgVal = extractUasg(l, d);
     const uasgTxt = $("#uasg-txt");
     if(uasgTxt && uasgVal){
       uasgTxt.textContent = uasgVal;
+    }
+    if(d&&d.unidadeCompradora){
+      const ucEl=$("#uc-txt");
+      if(ucEl) ucEl.textContent = d.unidadeCompradora;
+    } else if(uasgVal){
+      const ucEl=$("#uc-txt");
+      if(ucEl && l.orgao && !ucEl.textContent.includes(uasgVal)){
+        ucEl.textContent = uasgVal + " - " + l.orgao;
+      }
     }
     const z=$("#itens-zone");
     const its=(d&&d.itens)||[];
