@@ -29,6 +29,38 @@ interface ResultListProps {
   onPage: (page: number) => void;
 }
 
+function extractNumeroEdital(l: Licitacao): string {
+  const sources = [l.titulo, l.id, l.resumo];
+  for (const s of sources) {
+    if (!s) continue;
+    const m = s.match(/\b(?:edital|pregao|preg[aã]o|concorr[eê]ncia|dispensa|inexigibilidade|aviso|convite|leil[aã]o|processo)?\s*(?:eletr[oô]nico|presencial)?\s*(?:n[oº°.]?\s*)?(\d{1,6}\/\d{4})\b/i);
+    if (m) return m[1];
+    const m2 = s.match(/\b(?:edital|aviso|processo)\s*(?:n[oº°.]?\s*)?(\d{1,6}[-_]\d{4})\b/i);
+    if (m2) return m2[1].replace("-", "/").replace("_", "/");
+  }
+  if (l.id) {
+    const mPncp = l.id.match(/^\d{14}-\d+-(\d+)\/(\d{4})/);
+    if (mPncp) {
+      return parseInt(mPncp[1], 10) + "/" + mPncp[2];
+    }
+  }
+  return "";
+}
+
+function extractUasgCard(l: Licitacao): string {
+  const sources = [l.linkSistemaOrigem, l.linkPncp, l.id, l.titulo, l.resumo];
+  for (const s of sources) {
+    if (!s) continue;
+    const mUrl = s.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|uo)[=/](\d{5,6})/i);
+    if (mUrl) return mUrl[1];
+    const mTxt = s.match(/\b(?:uasg|ug)[\s:.-]*(\d{5,6})\b/i);
+    if (mTxt) return mTxt[1];
+    const mPref = s.match(/\b(?:comprasnet|comprasgov|siasg)[-_](\d{5,6})\b/i);
+    if (mPref) return mPref[1];
+  }
+  return "";
+}
+
 export function ResultList({ result, loading, error, favorites, onToggleFavorite, onSelect, onPage }: ResultListProps) {
   if (error) {
     return (
@@ -151,6 +183,18 @@ function LicitacaoCard({
           Descrição Completa do Objeto
         </p>
         <p className="whitespace-pre-wrap break-words">{l.resumo || l.titulo}</p>
+      </div>
+
+      {/* Destaque Nº do Edital e UASG */}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span className="flex items-center gap-1.5 rounded-lg border border-signal/30 bg-signal/10 px-2.5 py-1 text-xs font-semibold text-lime-200">
+          <FileText className="h-3.5 w-3.5 text-signal" />
+          Nº do Edital: <strong className="text-white">{extractNumeroEdital(l) || "—"}</strong>
+        </span>
+        <span className="flex items-center gap-1.5 rounded-lg border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-1 text-xs font-semibold text-cyan-200">
+          <Database className="h-3.5 w-3.5 text-cyan-400" />
+          UASG: <strong className="text-white">{extractUasgCard(l) || "—"}</strong>
+        </span>
       </div>
 
       {/* órgão / local */}

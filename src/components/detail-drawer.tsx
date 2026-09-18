@@ -1,3 +1,21 @@
+function extractNumeroEditalDrawer(l: Licitacao): string {
+  const sources = [l.titulo, l.id, l.resumo];
+  for (const s of sources) {
+    if (!s) continue;
+    const m = s.match(/\b(?:edital|pregao|preg[aã]o|concorr[eê]ncia|dispensa|inexigibilidade|aviso|convite|leil[aã]o|processo)?\s*(?:eletr[oô]nico|presencial)?\s*(?:n[oº°.]?\s*)?(\d{1,6}\/\d{4})\b/i);
+    if (m) return m[1];
+    const m2 = s.match(/\b(?:edital|aviso|processo)\s*(?:n[oº°.]?\s*)?(\d{1,6}[-_]\d{4})\b/i);
+    if (m2) return m2[1].replace("-", "/").replace("_", "/");
+  }
+  if (l.id) {
+    const mPncp = l.id.match(/^\d{14}-\d+-(\d+)\/(\d{4})/);
+    if (mPncp) {
+      return parseInt(mPncp[1], 10) + "/" + mPncp[2];
+    }
+  }
+  return "";
+}
+
 function extractUasg(l: Licitacao, detail?: LicitacaoDetail | null) {
   if (detail?.uasg) return detail.uasg;
   const sources = [

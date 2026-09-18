@@ -414,6 +414,26 @@ footer .fb{border-top:1px solid rgba(28,37,48,.5);padding:1rem;text-align:center
 <div class="toast" id="toast"></div>
 
 <script>
+function extractNumeroEdital(l){
+  const sources = [l.titulo, l.id, l.resumo];
+  for(const s of sources){
+    if(!s) continue;
+    // Padrões como: Pregão 12/2026, Pregão Eletrônico Nº 05/2026, Edital 14/2026, Edital nº 123/2026, Dispensa 90001/2025, Aviso de Contratação 37/2026
+    const m = s.match(/\b(?:edital|pregao|preg[aã]o|concorr[eê]ncia|dispensa|inexigibilidade|aviso|convite|leil[aã]o|processo)?\s*(?:eletr[oô]nico|presencial)?\s*(?:n[oº°.]?\s*)?(\d{1,6}\/\d{4})\b/i);
+    if(m) return m[1];
+    const m2 = s.match(/\b(?:edital|aviso|processo)\s*(?:n[oº°.]?\s*)?(\d{1,6}[-_]\d{4})\b/i);
+    if(m2) return m2[1].replace("-", "/").replace("_", "/");
+  }
+  if(l.id){
+    // Formato PNCP: 00394502000144-1-011703/2026 -> extrai sequencial e ano
+    const mPncp = l.id.match(/^\d{14}-\d+-(\d+)\/(\d{4})/);
+    if(mPncp){
+      return parseInt(mPncp[1], 10) + "/" + mPncp[2];
+    }
+  }
+  return "";
+}
+
 function extractUasg(l, d){
   if(d && d.uasg) return d.uasg;
   const sources = [
@@ -1043,7 +1063,11 @@ function renderGrid(){
       '<button type="button" class="heart'+(isFav?" on":"")+'" data-fav="'+esc(l.id)+'" aria-label="Favoritar">'+I.heart+'</button></div>'+
       '<h3>'+esc(l.titulo)+'</h3>'+
       (l.resumo ? '<div class="card-objeto"><p class="obj-lbl">'+I.file+'Descrição Completa do Objeto</p><p class="obj-content">'+esc(l.resumo)+'</p></div>' : '<div class="card-objeto"><p class="obj-lbl">'+I.file+'Descrição do Objeto</p><p class="obj-content">'+esc(l.titulo)+'</p></div>')+
-      '<div class="meta" style="margin-top:1rem"><p>'+I.landmark+'<span class="clamp2">'+esc(l.orgao||"Órgão não informado")+'</span></p>'+'   <p>'+I.receipt+'<span>UASG: <strong>'+(esc(extractUasg(l, null)) || '—')+'</strong></span></p>'+
+      '<div class="card-highlight-row" style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center">'+
+        '<span class="badge" style="border-color:rgba(163,230,53,.35);color:#d9f99d;background:rgba(163,230,53,.1);font-size:12px;padding:.3rem .7rem">'+I.file+' Nº do Edital: <strong style="margin-left:4px;color:#fff">'+(esc(extractNumeroEdital(l)) || "—")+'</strong></span>'+
+        '<span class="badge" style="border-color:rgba(34,211,238,.35);color:#67e8f9;background:rgba(34,211,238,.1);font-size:12px;padding:.3rem .7rem">'+I.receipt+' UASG: <strong style="margin-left:4px;color:#fff">'+(esc(extractUasg(l, null)) || "—")+'</strong></span>'+
+      '</div>'+
+      '<div class="meta" style="margin-top:.75rem"><p>'+I.landmark+'<span class="clamp2">'+esc(l.orgao||"Órgão não informado")+'</span></p>'+
       '<p>'+I.pin+'<span>'+esc(l.municipio||"—")+(l.uf?" · "+esc(l.uf):"")+'</span></p></div>'+
       '<div class="card-foot"><div><p class="lbl">'+I.cal+'Encerramento</p><p class="val">'+fmtDate(l.dataEncerramento)+'</p></div>'+
       '<div style="text-align:right"><p class="lbl" style="justify-content:flex-end">Valor estimado</p><p class="val money">'+(l.orcamentoSigiloso?"Sigiloso":fmtBRLc(l.valorEstimado))+'</p></div></div>'+
@@ -1120,6 +1144,7 @@ function openDrawer(l){
       '<div class="ddl-box tone-'+dl.tone+'"><div><p class="lbl">'+I.cal+'Fim do recebimento de propostas</p><p class="val" style="font-weight:600">'+fmtDT(l.dataEncerramento)+'</p></div><p class="big">'+dl.label+'</p></div>'+
       '<dl class="dgrid">'+
         '<div class="dcell full"><dt>'+I.landmark+'Unidade compradora</dt><dd id="uc-txt" style="font-weight:600;color:#fff">'+esc(parseUasgAndUnidade(l.orgao, l.id, l.linkPncp, l.linkSistemaOrigem))+'</dd></div>'+
+        '<div class="dcell" id="edital-cell"><dt>'+I.file+'Nº do Edital / Processo</dt><dd class="fm" style="font-weight:600;color:#fff">'+(esc(extractNumeroEdital(l)) || "—")+'</dd></div>'+
         '<div class="dcell" id="uasg-cell"><dt>'+I.receipt+'UASG</dt><dd id="uasg-txt" class="fm" style="font-weight:600;color:#d9f99d">'+(esc(extractUasg(l, null)) || "—")+'</dd></div>'+
         '<div class="dcell"><dt>'+I.radar+'Fonte</dt><dd>'+esc(l.portalNome||"PNCP")+'</dd></div>'+
         '<div class="dcell"><dt>'+I.pin+'Localidade</dt><dd>'+esc(l.municipio||"—")+(l.uf?" / "+esc(l.uf):"")+'</dd></div>'+
