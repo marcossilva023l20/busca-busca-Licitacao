@@ -1025,9 +1025,9 @@ function openDrawer(l){
         '<div class="dcell"><dt>Abertura</dt><dd>'+fmtDT(l.dataAbertura)+'</dd></div>'+
       '</dl>'+
       '<div class="obj" id="obj-zone" style="display:'+((l.resumo&&l.resumo!==l.titulo)?"block":"none")+'"><p class="k">Objeto</p><p id="obj-txt">'+esc(l.resumo||"")+'</p></div>'+
-      '<div class="itens"><p class="k">'+I.pkg+'Itens da Licitação <span id="itens-count" style="font-size:11px;color:var(--fog)"></span></p><div id="itens-zone"><div class="loading-note"><svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="3" opacity=".2"/><path d="M22 12a10 10 0 0 0-10-10" stroke-width="3" stroke-linecap="round"/></svg>Carregando itens…</div></div></div>'+
       '<div class="itens"><p class="k">'+I.file+'Documentos e Anexos <span id="docs-count" style="font-size:11px;color:var(--fog)"></span></p><div id="docs-zone"><div class="loading-note"><svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="3" opacity=".2"/><path d="M22 12a10 10 0 0 0-10-10" stroke-width="3" stroke-linecap="round"/></svg>Carregando documentos…</div></div></div>'+
-    '</div>'+
+    '<div class="itens"><p class="k">'+I.pkg+'Itens da Licitação <span id="itens-count" style="font-size:11px;color:var(--fog)"></span></p><div id="itens-zone"><div class="loading-note"><svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="3" opacity=".2"/><path d="M22 12a10 10 0 0 0-10-10" stroke-width="3" stroke-linecap="round"/></svg>Carregando itens…</div></div></div>'+
+      '</div>'+
     '<div class="drawer-foot">'+
       (l.linkPncp?'<a class="act act-pncp" href="'+esc(l.linkPncp)+'" target="_blank" rel="noopener noreferrer">'+I.ext+'Abrir no PNCP</a>':"")+
       (l.linkSistemaOrigem?'<a class="act" style="border-color:'+cor+'55;color:'+cor+';background:'+cor+'12" href="'+esc(l.linkSistemaOrigem)+'" target="_blank" rel="noopener noreferrer">'+I.ext+(l.portalNome?"Ir ao "+esc(l.portalNome):"Sistema de origem")+'</a>':"")+
