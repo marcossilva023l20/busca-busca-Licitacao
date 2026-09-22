@@ -897,7 +897,7 @@ const favIds = () => new Set(favorites.map(f=>f.id));
    O `resumo` (seção "Objeto") chega pelo fetchDetail. */
 const COLS_LIST = ["numero_controle_pncp","resumo","titulo","orgao_entidade","uf","municipio","modalidade_id","modalidade_nome","modo_disputa","portal_key","portal_nome","status","srp","orcamento_sigiloso","valor_estimado","data_abertura","data_publicacao","data_encerramento","link_pncp","link_sistema_origem","slug","esfera","quantidade_itens"].join(",");
 const COLS_FULL = "resumo," + COLS_LIST;
-function sbHeaders(extra){ return Object.assign({"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Accept":"application/json"},extra||{}); }
+function sbHeaders(extra){ return Object.assign({"apikey":ATLAS_SB_KEY,"Authorization":"Bearer "+ATLAS_SB_KEY,"Accept":"application/json"},extra||{}); }
 function mapRow(r){ return {
   id:r.numero_controle_pncp||"", titulo:r.titulo||"Sem título", resumo:r.resumo||null, orgao:r.orgao_entidade||null,
   uf:r.uf||null, municipio:r.municipio||null, modalidadeId:typeof r.modalidade_id==="number"?r.modalidade_id:null,
@@ -1384,9 +1384,60 @@ function renderHeader(){
   const b=$("#btn-csv"); if(b) b.addEventListener("click",exportCsv);
 }
 
+
+function detectPortalInfo(l){
+  let key = l.portalKey || null;
+  let nome = l.portalNome || null;
+
+  const url = (l.linkSistemaOrigem || l.linkPncp || "").toLowerCase();
+  const txt = ((l.titulo || "") + " " + (l.resumo || "") + " " + (l.orgao || "")).toLowerCase();
+
+  if(!key || key === "pncp" || !nome || nome === "PNCP"){
+    if(url.includes("comprasnet.gov.br") || url.includes("gov.br/compras") || url.includes("compras.dados.gov.br") || txt.includes("comprasnet") || txt.includes("compras.gov.br")){
+      key = "comprasnet"; nome = "ComprasNet";
+    } else if(url.includes("bll.org.br") || url.includes("bllcompras") || txt.includes("bll compras") || txt.includes("bll ")){
+      key = "bll-compras"; nome = "BLL Compras";
+    } else if(url.includes("bnc.org.br") || txt.includes("bnc compras") || txt.includes("bolsa nacional de compras") || txt.includes("bnc")){
+      key = "bnc"; nome = "BNC";
+    } else if(url.includes("licitanet.com.br") || txt.includes("licitanet")){
+      key = "licitanet"; nome = "Licitanet";
+    } else if(url.includes("licitacoes-e.com.br") || txt.includes("licitações-e") || txt.includes("licitacoes-e") || txt.includes("banco do brasil")){
+      key = "licitacoes-e"; nome = "Licitações-e (BB)";
+    } else if(url.includes("bec.sp.gov.br") || txt.includes("bec sp") || txt.includes("bec/sp")){
+      key = "bec-sp"; nome = "BEC-SP";
+    } else if(url.includes("portaldecompraspublicas.com.br") || txt.includes("portal de compras publicas")){
+      key = "portal-compras-publicas"; nome = "Portal de Compras Públicas";
+    } else if(url.includes("petronect") || txt.includes("petronect")){
+      key = "petronect"; nome = "Petronect";
+    } else if(url.includes("compras.mg.gov.br") || txt.includes("compras mg") || txt.includes("compras minas gerais")){
+      key = "compras-minas-gerais"; nome = "Compras MG";
+    } else if(url.includes("peintegrado") || txt.includes("pe integrado")){
+      key = "pe-integrado"; nome = "PE Integrado";
+    } else if(url.includes("comprasnet.ba.gov.br") || txt.includes("compras bahia")){
+      key = "compras-bahia"; nome = "Compras Bahia";
+    } else if(url.includes("compras.rs.gov.br") || txt.includes("compras rs")){
+      key = "compras-rs"; nome = "Compras RS";
+    } else if(url.includes("compras.rj.gov.br") || txt.includes("compras rj")){
+      key = "compras-rj"; nome = "Compras RJ";
+    } else if(url.includes("recife") && txt.includes("compras")){
+      key = "compras-recife"; nome = "Compras Recife";
+    } else if(url.includes("banrisul")){
+      key = "banrisul"; nome = "Banrisul";
+    } else if(url.includes("siga.es.gov.br") || txt.includes("siga es")){
+      key = "siga-es"; nome = "SIGA-ES";
+    } else if(url.includes("e-compras") || txt.includes("e-compras")){
+      key = "e-compras"; nome = "E-Compras";
+    }
+  }
+
+  if(!nome) nome = "PNCP";
+  return { key: key || "pncp", nome };
+}
+
 function portalBadge(l){
-  const cor=(l.portalKey&&PORTAL_COR[l.portalKey])||"#94a3b8";
-  return '<span class="badge" style="border-color:'+cor+'55;color:'+cor+';background:'+cor+'14"><span class="d" style="background:'+cor+'"></span>'+esc(l.portalNome||"PNCP")+'</span>';
+  const p = detectPortalInfo(l);
+  const cor = (p.key && PORTAL_COR[p.key]) || "#a3e635";
+  return '<span class="badge" style="border-color:'+cor+'55;color:'+cor+';background:'+cor+'14"><span class="d" style="background:'+cor+'"></span>'+esc(p.nome)+'</span>';
 }
 
 function renderGrid(){
