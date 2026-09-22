@@ -30,20 +30,40 @@ interface ResultListProps {
 }
 
 function extractNumeroEdital(l: Licitacao): string {
-  const sources = [l.titulo, l.id, l.resumo];
+  const sources = [
+    l.titulo,
+    l.resumo,
+    l.linkSistemaOrigem,
+    l.linkPncp,
+  ];
+
   for (const s of sources) {
     if (!s) continue;
-    const m = s.match(/\b(?:edital|pregao|preg[aã]o|concorr[eê]ncia|dispensa|inexigibilidade|aviso|convite|leil[aã]o|processo)?\s*(?:eletr[oô]nico|presencial)?\s*(?:n[oº°.]?\s*)?(\d{1,6}\/\d{4})\b/i);
-    if (m) return m[1];
-    const m2 = s.match(/\b(?:edital|aviso|processo)\s*(?:n[oº°.]?\s*)?(\d{1,6}[-_]\d{4})\b/i);
-    if (m2) return m2[1].replace("-", "/").replace("_", "/");
+    const mNumprp = s.match(/[?&]numprp=(\d{1,6})(\d{4})\b/i);
+    if (mNumprp) return `${parseInt(mNumprp[1], 10)}/${mNumprp[2]}`;
+
+    const mCompra = s.match(/[?&]compra=\d{6}\d{2}(\d{5})(\d{4})\b/i);
+    if (mCompra) return `${parseInt(mCompra[1], 10)}/${mCompra[2]}`;
+
+    const mExp = s.match(
+      /\b(?:edital|pregao|preg[aã]o|concorr[eê]ncia|dispensa|inexigibilidade|aviso(?:\s+de\s+contrata[cç][aã]o(?:\s+direta)?)?|convite|leil[aã]o|processo(?:\s+seletivo)?)\s*(?:eletr[oô]nico|presencial)?\s*(?:n[oº°.]?\s*)?(\d{1,6}\/\d{4})\b/i,
+    );
+    if (mExp) return mExp[1];
+
+    const mExpSep = s.match(
+      /\b(?:edital|pregao|preg[aã]o|concorr[eê]ncia|dispensa|aviso|processo)\s*(?:eletr[oô]nico|presencial)?\s*(?:n[oº°.]?\s*)?(\d{1,6}[-_]\d{4})\b/i,
+    );
+    if (mExpSep) return mExpSep[1].replace("-", "/").replace("_", "/");
+
+    const mN = s.match(/\b(?:n[º°.]\s*)(\d{1,6}\/\d{4})\b/i);
+    if (mN) return mN[1];
   }
-  if (l.id) {
-    const mPncp = l.id.match(/^\d{14}-\d+-(\d+)\/(\d{4})/);
-    if (mPncp) {
-      return parseInt(mPncp[1], 10) + "/" + mPncp[2];
-    }
+
+  if (l.titulo) {
+    const mTitle = l.titulo.match(/\b(\d{1,6}\/\d{4})\b/);
+    if (mTitle) return mTitle[1];
   }
+
   return "";
 }
 

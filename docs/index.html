@@ -414,23 +414,57 @@ footer .fb{border-top:1px solid rgba(28,37,48,.5);padding:1rem;text-align:center
 <div class="toast" id="toast"></div>
 
 <script>
-function extractNumeroEdital(l){
-  const sources = [l.titulo, l.id, l.resumo];
+function extractNumeroEdital(l, d){
+  // 1. Se vier do retorno detalhado da compra (API PNCP / Compras)
+  if(d){
+    const nc = d.numeroCompra || d.numero_compra;
+    const ac = d.anoCompra || d.ano_compra;
+    if(nc){
+      const ncStr = String(nc).trim();
+      if(ac && !ncStr.includes("/")) return ncStr + "/" + ac;
+      return ncStr;
+    }
+    const np = d.numeroProcesso || d.numero_processo || d.processo;
+    if(np) return String(np).trim();
+  }
+
+  // 2. Extrai de fontes textuais e links oficiais (NÃO usa o ID da contratação PNCP)
+  const sources = [
+    l && l.titulo,
+    l && l.resumo,
+    d && d.licitacao && d.licitacao.resumo,
+    ...(d && d.documentos ? d.documentos.map(doc => (doc.titulo || "") + " " + (doc.url || "")) : []),
+    l && l.linkSistemaOrigem,
+    l && l.linkPncp
+  ];
   for(const s of sources){
     if(!s) continue;
-    // Padrões como: Pregão 12/2026, Pregão Eletrônico Nº 05/2026, Edital 14/2026, Edital nº 123/2026, Dispensa 90001/2025, Aviso de Contratação 37/2026
-    const m = s.match(/\b(?:edital|pregao|preg[aã]o|concorr[eê]ncia|dispensa|inexigibilidade|aviso|convite|leil[aã]o|processo)?\s*(?:eletr[oô]nico|presencial)?\s*(?:n[oº°.]?\s*)?(\d{1,6}\/\d{4})\b/i);
-    if(m) return m[1];
-    const m2 = s.match(/\b(?:edital|aviso|processo)\s*(?:n[oº°.]?\s*)?(\d{1,6}[-_]\d{4})\b/i);
-    if(m2) return m2[1].replace("-", "/").replace("_", "/");
+    // Comprasnet URL: numprp=900082026 -> 90008/2026
+    const mNumprp = s.match(/[?&]numprp=(\d{1,6})(\d{4})\b/i);
+    if(mNumprp) return parseInt(mNumprp[1], 10) + "/" + mNumprp[2];
+
+    // Comprasnet URL: compra=15814605900082026 -> uasg(6) mod(2) aviso(5) ano(4) -> 90008/2026
+    const mCompra = s.match(/[?&]compra=\d{6}\d{2}(\d{5})(\d{4})\b/i);
+    if(mCompra) return parseInt(mCompra[1], 10) + "/" + mCompra[2];
+
+    // Padrões explícitos de instrumento convocatório
+    // Ex.: Pregão Eletrônico Nº 004/2026, Edital 14/2026, Dispensa 90001/2025, Aviso de Contratação Direta 37/2026, Processo 123/2026
+    const mExp = s.match(/\b(?:edital|pregao|preg[aã]o|concorr[eê]ncia|dispensa|inexigibilidade|aviso(?:\s+de\s+contrata[cç][aã]o(?:\s+direta)?)?|convite|leil[aã]o|processo(?:\s+seletivo)?)\s*(?:eletr[oô]nico|presencial)?\s*(?:n[oº°.]?\s*)?(\d{1,6}\/\d{4})\b/i);
+    if(mExp) return mExp[1];
+
+    const mExpSep = s.match(/\b(?:edital|pregao|preg[aã]o|concorr[eê]ncia|dispensa|aviso|processo)\s*(?:eletr[oô]nico|presencial)?\s*(?:n[oº°.]?\s*)?(\d{1,6}[-_]\d{4})\b/i);
+    if(mExpSep) return mExpSep[1].replace("-", "/").replace("_", "/");
+
+    const mN = s.match(/\b(?:n[º°.]\s*)(\d{1,6}\/\d{4})\b/i);
+    if(mN) return mN[1];
   }
-  if(l.id){
-    // Formato PNCP: 00394502000144-1-011703/2026 -> extrai sequencial e ano
-    const mPncp = l.id.match(/^\d{14}-\d+-(\d+)\/(\d{4})/);
-    if(mPncp){
-      return parseInt(mPncp[1], 10) + "/" + mPncp[2];
-    }
+
+  // Se o título contiver um número no padrão 90001/2026 isolado
+  if(l && l.titulo){
+    const mTitle = l.titulo.match(/\b(\d{1,6}\/\d{4})\b/);
+    if(mTitle) return mTitle[1];
   }
+
   return "";
 }
 
@@ -711,6 +745,9 @@ async function fetchDetail(id, linkPncp, linkSistemaOrigem){
 
   let unidadeCompradoraApi = null;
   let uasgApi = null;
+  let numeroCompraApi = null;
+  let anoCompraApi = null;
+  let numeroProcessoApi = null;
   if(cnpj && ano && seq){
     try{
       const rComp = await fetch("https://pncp.gov.br/api/pncp/v1/orgaos/"+cnpj+"/compras/"+ano+"/"+seq, {headers:{Accept:"application/json"},signal:AbortSignal.timeout(6000)});
@@ -727,6 +764,9 @@ async function fetchDetail(id, linkPncp, linkSistemaOrigem){
         } else if(uCod){
           unidadeCompradoraApi = uCod;
         }
+        if(dComp.numeroCompra) numeroCompraApi = dComp.numeroCompra;
+        if(dComp.anoCompra) anoCompraApi = dComp.anoCompra;
+        if(dComp.numeroProcesso || dComp.processo) numeroProcessoApi = dComp.numeroProcesso || dComp.processo;
       }
     }catch(e){}
 
@@ -832,12 +872,27 @@ async function fetchDetail(id, linkPncp, linkSistemaOrigem){
           } else if(uNom){
             unidadeCompradoraApi = (uasgApi ? uasgApi + " - " : "") + uNom;
           }
+          if(!numeroCompraApi && (sItem.numero_aviso || sItem.numero_compra || sItem.numeroCompra)) {
+            numeroCompraApi = sItem.numero_aviso || sItem.numero_compra || sItem.numeroCompra;
+          }
+          if(!numeroProcessoApi && (sItem.processo || sItem.numero_processo || sItem.numeroProcesso)) {
+            numeroProcessoApi = sItem.processo || sItem.numero_processo || sItem.numeroProcesso;
+          }
         }
       }
     }catch(e){}
   }
 
-  return {licitacao, itens:items, documentos, unidadeCompradora: unidadeCompradoraApi, uasg: uasgApi};
+  return {
+    licitacao,
+    itens: items,
+    documentos,
+    unidadeCompradora: unidadeCompradoraApi,
+    uasg: uasgApi,
+    numeroCompra: numeroCompraApi,
+    anoCompra: anoCompraApi,
+    numeroProcesso: numeroProcessoApi
+  };
 }
 
 async function fetchFacets(){
@@ -1144,7 +1199,7 @@ function openDrawer(l){
       '<div class="ddl-box tone-'+dl.tone+'"><div><p class="lbl">'+I.cal+'Fim do recebimento de propostas</p><p class="val" style="font-weight:600">'+fmtDT(l.dataEncerramento)+'</p></div><p class="big">'+dl.label+'</p></div>'+
       '<dl class="dgrid">'+
         '<div class="dcell full"><dt>'+I.landmark+'Unidade compradora</dt><dd id="uc-txt" style="font-weight:600;color:#fff">'+esc(parseUasgAndUnidade(l.orgao, l.id, l.linkPncp, l.linkSistemaOrigem))+'</dd></div>'+
-        '<div class="dcell" id="edital-cell"><dt>'+I.file+'Nº do Edital / Processo</dt><dd class="fm" style="font-weight:600;color:#fff">'+(esc(extractNumeroEdital(l)) || "—")+'</dd></div>'+
+        '<div class="dcell" id="edital-cell"><dt>'+I.file+'Nº do Edital / Processo</dt><dd id="edital-txt" class="fm" style="font-weight:600;color:#fff">'+(esc(extractNumeroEdital(l)) || "—")+'</dd></div>'+
         '<div class="dcell" id="uasg-cell"><dt>'+I.receipt+'UASG</dt><dd id="uasg-txt" class="fm" style="font-weight:600;color:#d9f99d">'+(esc(extractUasg(l, null)) || "—")+'</dd></div>'+
         '<div class="dcell"><dt>'+I.radar+'Fonte</dt><dd>'+esc(l.portalNome||"PNCP")+'</dd></div>'+
         '<div class="dcell"><dt>'+I.pin+'Localidade</dt><dd>'+esc(l.municipio||"—")+(l.uf?" / "+esc(l.uf):"")+'</dd></div>'+
@@ -1178,6 +1233,11 @@ function openDrawer(l){
     if(d&&d.licitacao&&d.licitacao.resumo&&d.licitacao.resumo!==l.titulo){
       const oz=$("#obj-zone"), ot=$("#obj-txt");
       if(oz&&ot){ ot.textContent=d.licitacao.resumo; oz.style.display="block"; }
+    }
+    const editalVal = extractNumeroEdital(l, d);
+    const editalTxt = $("#edital-txt");
+    if(editalTxt && editalVal){
+      editalTxt.textContent = editalVal;
     }
     const uasgVal = extractUasg(l, d);
     const uasgTxt = $("#uasg-txt");

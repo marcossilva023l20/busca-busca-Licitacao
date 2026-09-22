@@ -49,6 +49,9 @@ export interface LicitacaoDetail {
   documentos: LicitacaoDocumento[];
   unidadeCompradora?: string | null;
   uasg?: string | null;
+  numeroCompra?: string | number | null;
+  anoCompra?: string | number | null;
+  numeroProcesso?: string | null;
 }
 
 export interface SearchResult {

@@ -398,6 +398,9 @@ export async function getLicitacaoDetail(id: string): Promise<LicitacaoDetail> {
 
   let unidadeCompradora: string | null = null;
   let uasg: string | null = null;
+  let numeroCompra: string | number | null = null;
+  let anoCompra: string | number | null = null;
+  let numeroProcesso: string | null = null;
   if (pncp) {
     const { cnpj, ano, sequencial } = pncp;
 
@@ -420,6 +423,9 @@ export async function getLicitacaoDetail(id: string): Promise<LicitacaoDetail> {
         if (cod) {
           uasg = cod;
         }
+        if (dComp.numeroCompra) numeroCompra = dComp.numeroCompra;
+        if (dComp.anoCompra) anoCompra = dComp.anoCompra;
+        if (dComp.numeroProcesso || dComp.processo) numeroProcesso = dComp.numeroProcesso || dComp.processo;
       }
     } catch {
       // Ignora falha de consulta direta
@@ -536,6 +542,10 @@ export async function getLicitacaoDetail(id: string): Promise<LicitacaoDetail> {
     itens,
     documentos,
     unidadeCompradora,
+    uasg,
+    numeroCompra,
+    anoCompra,
+    numeroProcesso,
   };
 }
 
