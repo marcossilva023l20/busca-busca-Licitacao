@@ -581,9 +581,14 @@ function parseUasgAndUnidade(orgao, id, linkPncp, linkSistemaOrigem, unidadeNome
    fallback na API pública oficial do PNCP. CORS aberto: roda
    direto do navegador, sem back-end.
    ============================================================ */
-const SB_URL = "https://qsmzsmqcmhdxdkiyevzl.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzbXpzbXFjbWhkeGRraXlldnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMTE3NzIsImV4cCI6MjEwNTY4Nzc3Mn0.XA3UVuHcbZjINe-Lg9wtsCQMjlnfV_07FvzeNzEkqPM";
-const REST = SB_URL + "/rest/v1";
+// Fonte pública de consulta das licitações (Base aberta Atlas Licitações / PNCP):
+const ATLAS_SB_URL = "https://kkudnnbuzljloenwcjsa.supabase.co";
+const ATLAS_SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrdWRubmJ1emxqbG9lbndjanNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2MTU2NjQsImV4cCI6MjA4NzE5MTY2NH0.ETcqBjr_9_WAludecUC4IBVjlAjIJZogTpXt-hG0koY";
+const REST = ATLAS_SB_URL + "/rest/v1";
+
+// Banco de dados Supabase do Usuário (Autenticação e Licitações Salvas):
+const USER_SB_URL = "https://qsmzsmqcmhdxdkiyevzl.supabase.co";
+const USER_SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzbXpzbXFjbWhkeGRraXlldnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMTE3NzIsImV4cCI6MjEwNTY4Nzc3Mn0.XA3UVuHcbZjINe-Lg9wtsCQMjlnfV_07FvzeNzEkqPM";
 // Quantidade adaptativa de cards por página:
 // Ao afastar a página (zoom out) ou em telas maiores, exibe múltiplos cards lado a lado.
 function getPageSize(){
@@ -702,8 +707,8 @@ let customSupabaseConfig = load("radar:supabaseConfig") || null;
 function getSupabase(){
   if(supabaseClient) return supabaseClient;
   if(window.supabase){
-    const url = (customSupabaseConfig && customSupabaseConfig.url) || SB_URL;
-    const key = (customSupabaseConfig && customSupabaseConfig.key) || SB_KEY;
+    const url = (customSupabaseConfig && customSupabaseConfig.url) || USER_SB_URL;
+    const key = (customSupabaseConfig && customSupabaseConfig.key) || USER_SB_KEY;
     try {
       supabaseClient = window.supabase.createClient(url, key);
     } catch(e){
@@ -1943,8 +1948,8 @@ function openConfigModal(){
     document.body.appendChild(modal);
   }
 
-  const curUrl = (customSupabaseConfig && customSupabaseConfig.url) || SB_URL;
-  const curKey = (customSupabaseConfig && customSupabaseConfig.key) || SB_KEY;
+  const curUrl = (customSupabaseConfig && customSupabaseConfig.url) || USER_SB_URL;
+  const curKey = (customSupabaseConfig && customSupabaseConfig.key) || USER_SB_KEY;
 
   modal.innerHTML =
     '<div class="auth-modal-box">' +
