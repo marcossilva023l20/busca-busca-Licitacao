@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Radar Licitações — Encontre pregões e licitações abertas no Brasil</title>
+<title>Radar Licitações — Painel de Contratações e Licitações Salvas</title>
 <meta name="description" content="Busque licitações públicas em tempo real: filtre por fim do recebimento de propostas, UF, município, modalidade e sistema fonte (ComprasNet, BLL Compras, BNC e mais)." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -316,7 +316,43 @@ footer .fb{border-top:1px solid rgba(28,37,48,.5);padding:1rem;text-align:center
 .dim{opacity:.5;pointer-events:none;transition:opacity .2s}
 .toast{position:fixed;left:50%;bottom:1.5rem;z-index:100;transform:translateX(-50%) translateY(20px);border-radius:10px;padding:.6rem 1rem;font-size:13px;color:#ecfccb;background:rgba(17,23,34,.95);border:1px solid rgba(163,230,53,.4);opacity:0;transition:.25s;pointer-events:none}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Auth, Tabs & UI Enhancements */
+.nav-actions{display:flex;align-items:center;gap:.6rem}
+.auth-btn{display:inline-flex;align-items:center;gap:.45rem;border-radius:9px;padding:.5rem .85rem;font-size:13px;font-weight:600;transition:.2s;cursor:pointer;border:1px solid var(--line);background:rgba(17,23,34,.7);color:var(--mist)}
+.auth-btn:hover{border-color:rgba(163,230,53,.5);color:#fff}
+.auth-btn-primary{border-color:rgba(163,230,53,.5);background:rgba(163,230,53,.14);color:#d9f99d}
+.auth-btn-primary:hover{background:rgba(163,230,53,.25);color:#fff}
+.user-badge{display:flex;align-items:center;gap:.5rem;padding:.35rem .75rem;border-radius:999px;border:1px solid var(--line2);background:rgba(17,23,34,.9);font-size:12px;color:#ecfccb}
+.user-badge .avatar{width:24px;height:24px;border-radius:50%;background:var(--signal);color:var(--ink);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px}
+.btn-logout{border:0;background:none;color:var(--fog);cursor:pointer;padding:.2rem;display:flex;transition:.2s}
+.btn-logout:hover{color:var(--danger)}
+
+.view-tabs{display:flex;align-items:center;gap:.35rem;padding:.3rem;background:rgba(9,13,18,.75);border:1px solid var(--line);border-radius:12px;margin:1.25rem 0 .5rem}
+.view-tab{display:inline-flex;align-items:center;gap:.45rem;padding:.55rem 1.1rem;border-radius:9px;border:0;background:none;font-size:13.5px;font-weight:600;color:var(--fog);cursor:pointer;transition:.2s}
+.view-tab:hover{color:var(--mist)}
+.view-tab.active{background:rgba(163,230,53,.15);color:#d9f99d;border:1px solid rgba(163,230,53,.35)}
+.tab-count{font-family:var(--fm);font-size:11px;padding:.1rem .45rem;border-radius:6px;background:rgba(255,255,255,.08);color:inherit}
+
+.auth-card{max-width:420px;margin:2rem auto;padding:2rem;border-radius:18px;border:1px solid var(--line);background:rgba(12,17,23,.92);box-shadow:0 20px 50px -15px rgba(0,0,0,.6)}
+.auth-title{font-family:var(--fd);font-size:22px;font-weight:700;color:#fff;text-align:center;margin-bottom:.4rem}
+.auth-sub{font-size:13px;color:var(--fog);text-align:center;margin-bottom:1.5rem;line-height:1.5}
+.auth-field{margin-bottom:1rem}
+.auth-field label{display:block;font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--fog);margin-bottom:.4rem}
+.auth-field input{width:100%;height:44px;border-radius:10px;border:1px solid var(--line);background:rgba(9,13,18,.8);padding:0 .9rem;font-size:14px;color:#fff;transition:.2s}
+.auth-field input:focus{border-color:rgba(163,230,53,.6)}
+.auth-submit{width:100%;height:46px;margin-top:.75rem;border-radius:10px;border:0;background:var(--signal);color:var(--ink);font-family:var(--fd);font-size:14.5px;font-weight:700;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:.5rem}
+.auth-submit:hover{opacity:.9;box-shadow:0 0 20px rgba(163,230,53,.3)}
+.auth-toggle{margin-top:1.25rem;text-align:center;font-size:13px;color:var(--fog)}
+.auth-toggle a{color:var(--signal);font-weight:600;text-decoration:none;margin-left:.25rem;cursor:pointer}
+.auth-toggle a:hover{text-decoration:underline}
+.auth-notice{margin-top:1rem;padding:.75rem .9rem;border-radius:10px;font-size:12px;line-height:1.45}
+.auth-notice.err{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#fca5a5}
+.auth-notice.suc{background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.3);color:#d9f99d}
+.auth-notice.info{background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.3);color:#bae6fd}
+
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="bg-scene"></div><div class="bg-grid"></div><div class="bg-noise"></div>
@@ -330,7 +366,15 @@ footer .fb{border-top:1px solid rgba(28,37,48,.5);padding:1rem;text-align:center
         <p class="logo-sub">varredura nacional em tempo real</p>
       </div>
     </div>
-    <button class="fav-btn" id="btn-favorites" type="button"><span id="heart-icon"></span>Favoritos <span class="fav-count" id="fav-count">0</span></button>
+    <div class="nav-actions">
+      <div class="view-tabs" style="margin:0">
+        <button type="button" class="view-tab active" id="tab-all">Todas as Licitações</button>
+        <button type="button" class="view-tab" id="tab-saved">Licitações Salvas <span class="tab-count" id="tab-saved-count">0</span></button>
+      </div>
+      <div id="auth-nav-slot">
+        <button class="auth-btn auth-btn-primary" id="btn-login" type="button">Entrar</button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -521,8 +565,8 @@ function parseUasgAndUnidade(orgao, id, linkPncp, linkSistemaOrigem, unidadeNome
    fallback na API pública oficial do PNCP. CORS aberto: roda
    direto do navegador, sem back-end.
    ============================================================ */
-const SB_URL = "https://kkudnnbuzljloenwcjsa.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrdWRubmJ1emxqbG9lbndjanNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2MTU2NjQsImV4cCI6MjA4NzE5MTY2NH0.ETcqBjr_9_WAludecUC4IBVjlAjIJZogTpXt-hG0koY";
+const SB_URL = "https://qsmzsmqcmhdxdkiyevzl.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzbXpzbXFjbWhkeGRraXlldnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMTE3NzIsImV4cCI6MjEwNTY4Nzc3Mn0.XA3UVuHcbZjINe-Lg9wtsCQMjlnfV_07FvzeNzEkqPM";
 const REST = SB_URL + "/rest/v1";
 const PAGE_SIZE = 1;
 
@@ -587,7 +631,10 @@ const I = {
   db:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>',
   alert:'<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#f87171"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
   fsearch:'<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(139,152,169,.6)"><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M4.268 21a2 2 0 0 0 1.727 1H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v3"/><path d="m9 18-1.5-1.5"/><circle cx="5" cy="14" r="3"/></svg>',
-  receipt:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>'
+  receipt:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>',
+  user:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  logIn:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>',
+  logOut:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>'
 };
 
 /* ---------- utils ---------- */
@@ -604,13 +651,172 @@ function ilike(t){ return "*"+t.replace(/[*(),%_\\]/g," ").trim().replace(/\s+/g
 /* normaliza p/ full-text search: minúsculas, sem acentos, só letras/números/espaços */
 function normTerm(s){ return s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^\p{L}\p{N} ]/gu," ").replace(/\s+/g," ").trim(); }
 
-/* ---------- estado ---------- */
+/* ---------- estado & autenticação ---------- */
 const EMPTY = {q:"",uf:"",municipio:"",modalidades:[],portais:[],encerramentoDe:"",encerramentoAte:"",valorMin:"",valorMax:"",sort:"encerramento_asc"};
 let F = {...EMPTY};
 let page = 1, loading=false, result=null, errorMsg=null, showAll=false;
+let currentView = "all"; // "all" | "saved"
 let favorites = load("radar:favorites");
 let savedSearches = load("radar:savedSearches");
 let firstTotal = null;
+
+// Supabase Auth & Config
+let supabaseClient = null;
+let currentUser = null;
+let savedLicitacoesRemote = [];
+let authMode = "login"; // "login" | "signup"
+let customSupabaseConfig = load("radar:supabaseConfig") || null;
+
+function getSupabase(){
+  if(supabaseClient) return supabaseClient;
+  if(window.supabase){
+    const url = (customSupabaseConfig && customSupabaseConfig.url) || SB_URL;
+    const key = (customSupabaseConfig && customSupabaseConfig.key) || SB_KEY;
+    try {
+      supabaseClient = window.supabase.createClient(url, key);
+    } catch(e){
+      console.warn("Supabase init error:", e);
+    }
+  }
+  return supabaseClient;
+}
+
+function initAuth(){
+  const sb = getSupabase();
+  if(sb && sb.auth){
+    sb.auth.getSession().then(({data:{session}})=>{
+      if(session && session.user){
+        currentUser = session.user;
+        onUserLoggedIn(session.user);
+      } else {
+        currentUser = null;
+        renderAuthNav();
+      }
+    }).catch(()=>{
+      renderAuthNav();
+    });
+
+    sb.auth.onAuthStateChange((event, session)=>{
+      if(session && session.user){
+        currentUser = session.user;
+        onUserLoggedIn(session.user);
+      } else {
+        currentUser = null;
+        renderAuthNav();
+        if(currentView === "saved"){
+          renderGrid();
+          renderHeader();
+        }
+      }
+    });
+  } else {
+    // Modo local / visitante
+    renderAuthNav();
+  }
+}
+
+function onUserLoggedIn(user){
+  renderAuthNav();
+  syncRemoteFavorites();
+  toast("Bem-vindo(a), " + (user.email ? user.email.split("@")[0] : "Usuário"));
+  if(currentView === "saved"){
+    renderHeader();
+    renderGrid();
+  }
+}
+
+async function syncRemoteFavorites(){
+  // Limpa favoritos locais expirados
+  cleanExpiredFavorites();
+  const sb = getSupabase();
+  if(!sb || !currentUser) return;
+
+  try {
+    const { data, error } = await sb
+      .from("licitacoes_salvas")
+      .select("*")
+      .eq("user_id", currentUser.id);
+
+    if(!error && data){
+      // Filtra e exclui automaticamente as vencidas no banco remoto
+      const now = new Date();
+      const validRemote = [];
+      const expiredIds = [];
+
+      data.forEach(item => {
+        const dEnc = item.data_encerramento ? new Date(item.data_encerramento) : null;
+        if(dEnc && !isNaN(dEnc.getTime()) && dEnc < now){
+          expiredIds.push(item.id || item.numero_controle_pncp);
+        } else {
+          validRemote.push({
+            id: item.numero_controle_pncp,
+            titulo: item.titulo,
+            resumo: item.resumo || null,
+            orgao: item.orgao,
+            uf: item.uf,
+            municipio: item.municipio,
+            modalidadeNome: item.modalidade_nome,
+            portalNome: item.portal_nome,
+            dataEncerramento: item.data_encerramento,
+            linkPncp: item.link_pncp,
+            linkSistemaOrigem: item.link_sistema_origem,
+            valorEstimado: item.valor_estimado
+          });
+        }
+      });
+
+      // Exclui as vencidas no banco
+      if(expiredIds.length > 0){
+        sb.from("licitacoes_salvas")
+          .delete()
+          .in("numero_controle_pncp", expiredIds)
+          .catch(()=>{});
+      }
+
+      // Mescla com favoritos locais mantendo unicidade
+      const mergedMap = new Map();
+      validRemote.forEach(r => mergedMap.set(r.id, r));
+      favorites.forEach(f => {
+        if(!mergedMap.has(f.id)) mergedMap.set(f.id, f);
+      });
+      favorites = Array.from(mergedMap.values());
+      persist("radar:favorites", favorites);
+      updateFavoritesCount();
+      if(currentView === "saved") { renderGrid(); renderHeader(); }
+    }
+  } catch(e){
+    console.warn("Sync error:", e);
+  }
+}
+
+// Exclui automaticamente licitações salvas com data de encerramento passada
+function cleanExpiredFavorites(){
+  const now = new Date();
+  const valid = [];
+  let removed = 0;
+  for(const f of favorites){
+    if(f.dataEncerramento){
+      const dt = new Date(f.dataEncerramento);
+      if(!isNaN(dt.getTime()) && dt < now){
+        removed++;
+        continue; // Excluída automaticamente após encerramento
+      }
+    }
+    valid.push(f);
+  }
+  if(removed > 0){
+    favorites = valid;
+    persist("radar:favorites", favorites);
+    updateFavoritesCount();
+  }
+}
+
+function updateFavoritesCount(){
+  const el = $("#tab-saved-count");
+  if(el) el.textContent = String(favorites.length);
+  const favEl = $("#fav-count");
+  if(favEl) favEl.textContent = String(favorites.length);
+}
 
 function load(k){ try{ return JSON.parse(localStorage.getItem(k)||"[]"); }catch(e){ return []; } }
 function persist(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
@@ -1079,6 +1285,20 @@ function setF(patch){ F={...F,...patch}; page=1; showAll=false; runSearch(); con
 
 function renderHeader(){
   const h=$("#result-header"); if(!h) return;
+
+  if(currentView === "saved"){
+    cleanExpiredFavorites();
+    const count = favorites.length;
+    let title = '<span class="n">'+count+'</span> licitaç'+(count===1?"ão salva":"ões salvas");
+    let src = '<span class="src-badge" style="border-color:rgba(163,230,53,.3);color:#d9f99d">'+I.heart+(currentUser ? 'Sincronizado via Nuvem' : 'Armazenamento Local')+ '</span>';
+    h.innerHTML='<div style="display:flex;align-items:center;flex-wrap:wrap">'+ '<h2>'+title+'</h2>'+src+'</div>'+
+      '<div style="display:flex;align-items:center;gap:.5rem">'+
+        '<button type="button" class="csv-btn" id="btn-csv" '+(count===0?"disabled":"")+'>'+I.download+'Exportar Salvas (CSV)</button>'+
+      '</div>';
+    const b=$("#btn-csv"); if(b) b.addEventListener("click",exportCsv);
+    return;
+  }
+
   let title="Buscando licitações…";
   let src="";
   if(result){
@@ -1098,6 +1318,59 @@ function portalBadge(l){
 
 function renderGrid(){
   const g=$("#grid"); if(!g) return;
+
+  if(currentView === "saved"){
+    cleanExpiredFavorites();
+    const favs=favIds();
+    let displayList = favorites.slice();
+    if(F.q && F.q.trim()){
+      const t = F.q.toLowerCase();
+      displayList = displayList.filter(l => (l.titulo && l.titulo.toLowerCase().includes(t)) || (l.resumo && l.resumo.toLowerCase().includes(t)) || (l.orgao && l.orgao.toLowerCase().includes(t)));
+    }
+    if(!displayList.length){
+      g.innerHTML='<div class="state empty" style="grid-column:1/-1">'+I.heart.replace('width="16" height="16"','width="44" height="44"')+
+        '<p class="t" style="margin-top:1rem;font-size:17px;font-weight:700">Nenhuma licitação salva encontrada</p>'+
+        '<p class="s" style="max-width:440px;margin:0 auto">Salve licitações clicando no ícone de coração nos cards. Elas ficam organizadas aqui e são <strong>automaticamente excluídas assim que expirar o prazo de encerramento da proposta</strong>.</p>'+
+        '<button type="button" class="auth-btn auth-btn-primary" style="margin:1.5rem auto 0;display:inline-flex" onclick="switchView(\'all\')">Explorar Licitações Abertas</button>'+
+        '</div>';
+      return;
+    }
+    g.classList.remove("dim");
+    g.innerHTML=displayList.map((l,i)=>{
+      const dl=deadline(l.dataEncerramento);
+      const isFav=favs.has(l.id);
+      return '<article class="card" data-id="'+esc(l.id)+'" style="animation-delay:'+Math.min(i*30,300)+'ms">'+
+        '<div class="card-top"><div class="badges">'+portalBadge(l)+(l.modalidadeNome?'<span class="badge badge-mod">'+esc(l.modalidadeNome)+'</span>':"")+'</div>'+
+        '<button type="button" class="heart on" data-fav="'+esc(l.id)+'" aria-label="Remover das salvas" title="Remover">'+I.heart+'</button></div>'+
+        '<h3>'+esc(l.titulo)+'</h3>'+
+        (l.resumo ? '<div class="card-objeto"><p class="obj-lbl">'+I.file+'Descrição Completa do Objeto</p><p class="obj-content">'+esc(l.resumo)+'</p></div>' : '<div class="card-objeto"><p class="obj-lbl">'+I.file+'Descrição do Objeto</p><p class="obj-content">'+esc(l.titulo)+'</p></div>')+
+        '<div class="card-highlight-row" style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center">'+
+          '<span class="badge" style="border-color:rgba(163,230,53,.35);color:#d9f99d;background:rgba(163,230,53,.1);font-size:12px;padding:.3rem .7rem">'+I.file+' Nº do Edital: <strong style="margin-left:4px;color:#fff">'+(esc(extractNumeroEdital(l)) || "—")+'</strong></span>'+
+          '<span class="badge" style="border-color:rgba(34,211,238,.35);color:#67e8f9;background:rgba(34,211,238,.1);font-size:12px;padding:.3rem .7rem">'+I.receipt+' UASG: <strong style="margin-left:4px;color:#fff">'+(esc(extractUasg(l, null)) || "—")+'</strong></span>'+
+        '</div>'+
+        '<div class="meta" style="margin-top:.75rem"><p>'+I.landmark+'<span class="clamp2">'+esc(l.orgao||"Órgão não informado")+'</span></p>'+
+        '<p>'+I.pin+'<span>'+esc(l.municipio||"—")+(l.uf?" · "+esc(l.uf):"")+'</span></p></div>'+
+        '<div class="card-foot"><div><p class="lbl">'+I.cal+'Encerramento (exclusão automática após)</p><p class="val">'+fmtDate(l.dataEncerramento)+'</p></div>'+
+        '<div style="text-align:right"><p class="lbl" style="justify-content:flex-end">Valor estimado</p><p class="val money">'+(l.orcamentoSigiloso?"Sigiloso":fmtBRLc(l.valorEstimado))+'</p></div></div>'+
+        '<div class="ddl tone-'+dl.tone+'">'+(dl.tone==="critical"?'<span class="pd"></span>':"")+dl.label+'</div>'+
+      '</article>';
+    }).join("");
+
+    g.querySelectorAll(".card").forEach(c=>{
+      c.addEventListener("click",e=>{
+        if(e.target.closest(".heart")) return;
+        const l=displayList.find(x=>x.id===c.dataset.id); if(l) openDrawer(l);
+      });
+    });
+    g.querySelectorAll(".heart").forEach(b=>{
+      b.addEventListener("click",e=>{
+        e.stopPropagation();
+        const l=displayList.find(x=>x.id===b.dataset.fav); if(l) toggleFavorite(l);
+      });
+    });
+    return;
+  }
+
   if(errorMsg){ g.innerHTML='<div class="state err" style="grid-column:1/-1">'+I.alert+'<p class="s" style="margin-top:.75rem">'+esc(errorMsg)+'</p></div>'; return; }
   if(loading&&!result){
     g.innerHTML=Array.from({length:9}).map(()=>'<div class="sk"><div style="height:12px;width:8rem"></div><div style="height:14px;width:100%;margin-top:.75rem"></div><div style="height:14px;width:75%;margin-top:.5rem"></div><div style="height:12px;width:50%;margin-top:1rem"></div><div style="display:flex;justify-content:space-between;margin-top:1.25rem"><div style="height:24px;width:6rem;border-radius:999px"></div><div style="height:24px;width:5rem;border-radius:999px"></div></div></div>').join("");
@@ -1305,14 +1578,69 @@ function closeDrawer(){
   },320);
 }
 
-/* ---------- favoritos ---------- */
-function toggleFavorite(l){
+/* ---------- favoritos & persistência Supabase ---------- */
+async function toggleFavorite(l){
+  cleanExpiredFavorites();
   const favs=favIds();
-  if(favs.has(l.id)){ favorites=favorites.filter(f=>f.id!==l.id); toast("Removido dos favoritos"); }
-  else { favorites.unshift({id:l.id,titulo:l.titulo,orgao:l.orgao,uf:l.uf,municipio:l.municipio,modalidadeNome:l.modalidadeNome,portalNome:l.portalNome,dataEncerramento:l.dataEncerramento,linkPncp:l.linkPncp,linkSistemaOrigem:l.linkSistemaOrigem}); toast("Salvo nos favoritos"); }
-  persist("radar:favorites",favorites);
-  $("#fav-count").textContent=String(favorites.length);
-  renderGrid();
+  const sb = getSupabase();
+
+  if(favs.has(l.id)){
+    favorites=favorites.filter(f=>f.id!==l.id);
+    persist("radar:favorites",favorites);
+    updateFavoritesCount();
+    toast("Removido das licitações salvas");
+    if(currentUser && sb){
+      sb.from("licitacoes_salvas")
+        .delete()
+        .eq("user_id", currentUser.id)
+        .eq("numero_controle_pncp", l.id)
+        .catch(()=>{});
+    }
+  } else {
+    const item = {
+      id: l.id,
+      titulo: l.titulo,
+      resumo: l.resumo || null,
+      orgao: l.orgao,
+      uf: l.uf,
+      municipio: l.municipio,
+      modalidadeNome: l.modalidadeNome,
+      portalNome: l.portalNome,
+      dataEncerramento: l.dataEncerramento,
+      linkPncp: l.linkPncp,
+      linkSistemaOrigem: l.linkSistemaOrigem,
+      valorEstimado: l.valorEstimado
+    };
+    favorites.unshift(item);
+    persist("radar:favorites",favorites);
+    updateFavoritesCount();
+    toast("Licitação salva com sucesso!");
+
+    if(currentUser && sb){
+      sb.from("licitacoes_salvas").upsert({
+        user_id: currentUser.id,
+        numero_controle_pncp: l.id,
+        titulo: l.titulo,
+        resumo: l.resumo || null,
+        orgao: l.orgao,
+        uf: l.uf,
+        municipio: l.municipio,
+        modalidade_nome: l.modalidadeNome,
+        portal_nome: l.portalNome,
+        data_encerramento: l.dataEncerramento,
+        link_pncp: l.linkPncp,
+        link_sistema_origem: l.linkSistemaOrigem,
+        valor_estimado: l.valorEstimado
+      }).catch(err=>console.warn("Save remote error:", err));
+    }
+  }
+
+  if(currentView === "saved"){
+    renderHeader();
+    renderGrid();
+  } else {
+    renderGrid();
+  }
 }
 function openFavoritesModal(){
   const root=$("#modal-root");
@@ -1374,6 +1702,271 @@ function openSaveModal(){
   $("#mcancel").addEventListener("click",close);
 }
 
+
+/* ---------- navegação de abas (Todas vs Salvas) ---------- */
+function switchView(view){
+  currentView = view;
+  const tabAll = $("#tab-view-all");
+  const tabSaved = $("#tab-view-saved");
+  const filterDock = $("#dock");
+  const pag = $("#pagination");
+
+  if(tabAll && tabSaved){
+    tabAll.classList.toggle("active", view === "all");
+    tabSaved.classList.toggle("active", view === "saved");
+  }
+
+  if(view === "saved"){
+    cleanExpiredFavorites();
+    if(filterDock) filterDock.style.display = "none";
+    if(pag) pag.style.display = "none";
+  } else {
+    if(filterDock) filterDock.style.display = "";
+    if(pag) pag.style.display = "";
+  }
+
+  renderHeader();
+  renderGrid();
+  updateFavoritesCount();
+}
+
+/* ---------- autenticação & Supabase UI ---------- */
+function renderAuthNav(){
+  const slot = $("#auth-nav-slot");
+  if(!slot) return;
+
+  if(currentUser){
+    const email = currentUser.email || "Usuário";
+    const initial = (email[0] || "U").toUpperCase();
+    slot.innerHTML =
+      '<div class="user-badge" id="user-profile-btn" title="Conectado como '+esc(email)+'">' +
+        '<div class="user-avatar">'+esc(initial)+'</div>' +
+        '<span style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(email)+'</span>' +
+      '</div>' +
+      '<button type="button" class="auth-btn auth-btn-secondary" id="btn-auth-logout" title="Sair">'+I.logOut+'<span>Sair</span></button>';
+
+    const btnLogout = $("#btn-auth-logout");
+    if(btnLogout) btnLogout.addEventListener("click", logoutUser);
+
+    const btnProf = $("#user-profile-btn");
+    if(btnProf) btnProf.addEventListener("click", openConfigModal);
+  } else {
+    slot.innerHTML =
+      '<button type="button" class="auth-btn auth-btn-secondary" id="btn-auth-open-login">'+I.logIn+'<span>Entrar / Cadastrar</span></button>';
+    const btnLogin = $("#btn-auth-open-login");
+    if(btnLogin) btnLogin.addEventListener("click", ()=>openAuthModal("login"));
+  }
+}
+
+function openAuthModal(mode = "login"){
+  authMode = mode;
+  let modal = $("#auth-modal");
+  if(!modal){
+    modal = document.createElement("div");
+    modal.id = "auth-modal";
+    modal.className = "auth-modal-overlay";
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML =
+    '<div class="auth-modal-box">' +
+      '<button type="button" class="auth-modal-close" id="btn-auth-modal-close">&times;</button>' +
+      '<div class="auth-modal-header">' +
+        '<h3>'+(authMode==="login" ? "Entrar na sua Conta" : "Criar Nova Conta")+'</h3>' +
+        '<p>Sincronize suas licitações salvas na nuvem com o banco de dados Supabase.</p>' +
+      '</div>' +
+      '<form id="auth-form" style="display:flex;flex-direction:column;gap:1rem">' +
+        '<div class="auth-field">' +
+          '<label>E-mail institucional ou pessoal</label>' +
+          '<input type="email" id="auth-email" required placeholder="seu@email.com" autocomplete="email">' +
+        '</div>' +
+        '<div class="auth-field">' +
+          '<label>Senha de acesso</label>' +
+          '<input type="password" id="auth-password" required placeholder="••••••••" autocomplete="current-password">' +
+        '</div>' +
+        '<button type="submit" class="auth-btn auth-btn-primary" id="btn-auth-submit" style="padding:.75rem;justify-content:center;margin-top:.5rem">' +
+          (authMode==="login" ? "Acessar Conta" : "Cadastrar Conta") +
+        '</button>' +
+      '</form>' +
+      '<div style="margin-top:1.25rem;text-align:center;font-size:13px;color:#94a3b8">' +
+        (authMode==="login" ?
+          'Ainda não tem conta? <a href="#" id="auth-toggle-mode" style="color:#a3e635;font-weight:600">Criar cadastro</a>' :
+          'Já tem uma conta? <a href="#" id="auth-toggle-mode" style="color:#a3e635;font-weight:600">Fazer login</a>') +
+      '</div>' +
+      '<div style="margin-top:1.2rem;border-top:1px dashed rgba(255,255,255,.1);padding-top:.85rem;text-align:center">' +
+        '<button type="button" id="auth-open-config" style="background:none;border:none;color:#64748b;font-size:12px;cursor:pointer;text-decoration:underline">⚙ Configurar Credenciais do Supabase (URL / Chave)</button>' +
+      '</div>' +
+    '</div>';
+
+  modal.classList.add("active");
+
+  $("#btn-auth-modal-close").addEventListener("click", closeAuthModal);
+  $("#auth-modal").addEventListener("click", (e)=>{
+    if(e.target === modal) closeAuthModal();
+  });
+
+  const toggleBtn = $("#auth-toggle-mode");
+  if(toggleBtn){
+    toggleBtn.addEventListener("click", (e)=>{
+      e.preventDefault();
+      openAuthModal(authMode==="login" ? "signup" : "login");
+    });
+  }
+
+  const confBtn = $("#auth-open-config");
+  if(confBtn){
+    confBtn.addEventListener("click", (e)=>{
+      e.preventDefault();
+      closeAuthModal();
+      openConfigModal();
+    });
+  }
+
+  const form = $("#auth-form");
+  if(form){
+    form.addEventListener("submit", handleAuthSubmit);
+  }
+}
+
+function closeAuthModal(){
+  const modal = $("#auth-modal");
+  if(modal) modal.classList.remove("active");
+}
+
+async function handleAuthSubmit(e){
+  e.preventDefault();
+  const email = $("#auth-email").value.trim();
+  const password = $("#auth-password").value;
+  const submitBtn = $("#btn-auth-submit");
+
+  if(!email || !password){
+    toast("Preencha e-mail e senha");
+    return;
+  }
+
+  const sb = getSupabase();
+  if(!sb){
+    toast("Erro ao inicializar conexão com o Supabase");
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Processando…";
+
+  try {
+    if(authMode === "signup"){
+      const { data, error } = await sb.auth.signUp({ email, password });
+      if(error){
+        toast("Erro ao cadastrar: " + error.message);
+      } else {
+        toast("Cadastro realizado com sucesso!");
+        closeAuthModal();
+        if(data.user){
+          currentUser = data.user;
+          onUserLoggedIn(data.user);
+        }
+      }
+    } else {
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      if(error){
+        toast("Falha no login: " + error.message);
+      } else {
+        toast("Login realizado com sucesso!");
+        closeAuthModal();
+        if(data.user){
+          currentUser = data.user;
+          onUserLoggedIn(data.user);
+        }
+      }
+    }
+  } catch(err){
+    toast("Ocorreu um erro na autenticação");
+    console.error(err);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = authMode==="login" ? "Acessar Conta" : "Cadastrar Conta";
+  }
+}
+
+async function logoutUser(){
+  const sb = getSupabase();
+  if(sb && sb.auth){
+    await sb.auth.signOut();
+  }
+  currentUser = null;
+  renderAuthNav();
+  toast("Você saiu da sua conta.");
+  if(currentView === "saved"){
+    renderHeader();
+    renderGrid();
+  }
+}
+
+function openConfigModal(){
+  let modal = $("#config-modal");
+  if(!modal){
+    modal = document.createElement("div");
+    modal.id = "config-modal";
+    modal.className = "auth-modal-overlay";
+    document.body.appendChild(modal);
+  }
+
+  const curUrl = (customSupabaseConfig && customSupabaseConfig.url) || SB_URL;
+  const curKey = (customSupabaseConfig && customSupabaseConfig.key) || SB_KEY;
+
+  modal.innerHTML =
+    '<div class="auth-modal-box">' +
+      '<button type="button" class="auth-modal-close" id="btn-config-modal-close">&times;</button>' +
+      '<div class="auth-modal-header">' +
+        '<h3>Configuração do Banco Supabase</h3>' +
+        '<p>Insira a URL e a Anon Key do seu projeto Supabase para vincular seu banco de dados diretamente.</p>' +
+      '</div>' +
+      '<form id="config-form" style="display:flex;flex-direction:column;gap:1rem">' +
+        '<div class="auth-field">' +
+          '<label>Supabase Project URL</label>' +
+          '<input type="url" id="sb-input-url" required value="'+esc(curUrl)+'" placeholder="https://xyz.supabase.co">' +
+        '</div>' +
+        '<div class="auth-field">' +
+          '<label>Supabase Anon Key</label>' +
+          '<input type="text" id="sb-input-key" required value="'+esc(curKey)+'" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">' +
+        '</div>' +
+        '<div style="display:flex;gap:.75rem;margin-top:.5rem">' +
+          '<button type="submit" class="auth-btn auth-btn-primary" style="flex:1;padding:.75rem;justify-content:center">Salvar Credenciais</button>' +
+          '<button type="button" id="btn-reset-config" class="auth-btn auth-btn-secondary" style="padding:.75rem">Restaurar Padrão</button>' +
+        '</div>' +
+      '</form>' +
+    '</div>';
+
+  modal.classList.add("active");
+  $("#btn-config-modal-close").addEventListener("click", ()=>modal.classList.remove("active"));
+  modal.addEventListener("click", (e)=>{ if(e.target === modal) modal.classList.remove("active"); });
+
+  $("#btn-reset-config").addEventListener("click", ()=>{
+    customSupabaseConfig = null;
+    localStorage.removeItem("radar:supabaseConfig");
+    supabaseClient = null;
+    toast("Configuração padrão restaurada!");
+    modal.classList.remove("active");
+    initAuth();
+  });
+
+  $("#config-form").addEventListener("submit", (e)=>{
+    e.preventDefault();
+    const url = $("#sb-input-url").value.trim();
+    const key = $("#sb-input-key").value.trim();
+    if(!url || !key){
+      toast("Preencha URL e Anon Key");
+      return;
+    }
+    customSupabaseConfig = { url, key };
+    persist("radar:supabaseConfig", customSupabaseConfig);
+    supabaseClient = null;
+    toast("Credenciais do Supabase salvas!");
+    modal.classList.remove("active");
+    initAuth();
+  });
+}
+
 /* ---------- boot ---------- */
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape"){
@@ -1383,12 +1976,23 @@ document.addEventListener("keydown",e=>{
 });
 function boot(){
   $("#logo-icon").innerHTML=I.radio;
-  $("#heart-icon").innerHTML=I.heart;
-  $("#foot-logo").insertAdjacentHTML("afterbegin",'<span style="color:var(--signal);display:flex">'+I.radio.replace('width="20" height="20"','width="16" height="16"')+'</span>');
-  $("#btn-favorites").addEventListener("click",openFavoritesModal);
-  $("#fav-count").textContent=String(favorites.length);
+  const hIcon = $("#heart-icon");
+  if(hIcon) hIcon.innerHTML=I.heart;
+  const btnFav = $("#btn-favorites");
+  if(btnFav) btnFav.addEventListener("click",openFavoritesModal);
+  const footLogo = $("#foot-logo");
+  if(footLogo) footLogo.insertAdjacentHTML("afterbegin",'<span style="color:var(--signal);display:flex">'+I.radio.replace('width="20" height="20"','width="16" height="16"')+'</span>');
+
+  const tabAll = $("#tab-view-all");
+  if(tabAll) tabAll.addEventListener("click", ()=>switchView("all"));
+  const tabSaved = $("#tab-view-saved");
+  if(tabSaved) tabSaved.addEventListener("click", ()=>switchView("saved"));
+
+  cleanExpiredFavorites();
+  updateFavoritesCount();
   $("#st-portais").textContent=String(PORTAIS.length);
   renderTicker(); renderSavedBar(); renderDock(); renderResultsToolbar(); renderHeader(); runSearch(); fetchFacets();
+  initAuth();
 }
 document.readyState==="loading" ? document.addEventListener("DOMContentLoaded",boot) : boot();
 </script>
