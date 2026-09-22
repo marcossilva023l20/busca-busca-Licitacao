@@ -384,11 +384,11 @@ footer .fb{border-top:1px solid rgba(28,37,48,.5);padding:1rem;text-align:center
     </div>
     <div class="nav-actions">
       <div class="view-tabs" style="margin:0">
-        <button type="button" class="view-tab active" id="tab-all">Todas as Licitações</button>
-        <button type="button" class="view-tab" id="tab-saved">Licitações Salvas <span class="tab-count" id="tab-saved-count">0</span></button>
+        <button type="button" class="view-tab active" id="tab-all" onclick="switchView('all')">Todas as Licitações</button>
+        <button type="button" class="view-tab" id="tab-saved" onclick="switchView('saved')">Licitações Salvas <span class="tab-count" id="tab-saved-count">0</span></button>
       </div>
       <div id="auth-nav-slot">
-        <button class="auth-btn auth-btn-primary" id="btn-login" type="button">Entrar</button>
+        <button class="auth-btn auth-btn-primary" id="btn-auth-open-login" onclick="openAuthModal('login')" type="button">Entrar / Cadastrar</button>
       </div>
     </div>
   </div>
@@ -851,10 +851,13 @@ function cleanExpiredFavorites(){
 }
 
 function updateFavoritesCount(){
+  const len = String(favorites.length);
   const el = $("#tab-saved-count");
-  if(el) el.textContent = String(favorites.length);
+  if(el) el.textContent = len;
   const favEl = $("#fav-count");
-  if(favEl) favEl.textContent = String(favorites.length);
+  if(favEl) favEl.textContent = len;
+  const dockEl = $("#dock-saved-count");
+  if(dockEl) dockEl.textContent = len;
 }
 
 function load(k){ try{ return JSON.parse(localStorage.getItem(k)||"[]"); }catch(e){ return []; } }
@@ -1187,6 +1190,7 @@ function renderDock(){
       '<div class="presets" id="presets">'+PRESETS.map((p,i)=>'<button type="button" class="preset" data-i="'+i+'">'+p.label+'</button>').join("")+'</div></div>'+
     '<div><p class="flabel">'+I.dollar+'Valor estimado (R$)</p><div class="date-row"><input class="field" id="f-vmin" inputmode="numeric" placeholder="Mínimo" value="'+esc(F.valorMin)+'"><span class="sep">–</span><input class="field" id="f-vmax" inputmode="numeric" placeholder="Máximo" value="'+esc(F.valorMax)+'"></div></div>'+
     '<div class="btn-row" style="flex-wrap:nowrap">'+
+      '<button type="button" class="btn btn-ghost" id="btn-filter-saved" style="background:rgba(163,230,53,.1);color:#d9f99d;border-color:rgba(163,230,53,.3)" title="Alternar para licitações salvas">'+I.heart+'Salvas ('+favorites.length+')</button>'+
       '<button type="button" class="btn btn-ghost" id="btn-clear" title="Limpar filtros">'+I.eraser+'Limpar'+(activeCount()?" ("+activeCount()+")":"")+'</button>'+
       '<button type="button" class="btn btn-save" id="btn-save" title="Salvar esta combinação de filtros">'+I.bookmark+'Salvar</button>'+
     '</div>'+
@@ -1201,6 +1205,9 @@ function renderDock(){
   $("#f-ate").addEventListener("change",e=>setF({encerramentoAte:e.target.value}));
   $("#f-vmin").addEventListener("input",e=>{ clearTimeout(deb); const v=e.target.value.replace(/[^\d]/g,""); deb=setTimeout(()=>setF({valorMin:v}),450); });
   $("#f-vmax").addEventListener("input",e=>{ clearTimeout(deb); const v=e.target.value.replace(/[^\d]/g,""); deb=setTimeout(()=>setF({valorMax:v}),450); });
+  $("#btn-filter-saved") && $("#btn-filter-saved").addEventListener("click",()=>{
+    switchView(currentView === "saved" ? "all" : "saved");
+  });
   $("#btn-clear").addEventListener("click",()=>{ F={...EMPTY}; page=1; showAll=false; renderDock(); renderResultsToolbar(); runSearch(); renderSavedBar(); });
   $("#btn-save").addEventListener("click",openSaveModal);
   $("#presets").addEventListener("click",e=>{
@@ -1745,28 +1752,32 @@ function openSaveModal(){
 /* ---------- navegação de abas (Todas vs Salvas) ---------- */
 function switchView(view){
   currentView = view;
-  const tabAll = $("#tab-view-all");
-  const tabSaved = $("#tab-view-saved");
+  const tAll = $("#tab-all") || $("#tab-view-all");
+  const tSaved = $("#tab-saved") || $("#tab-view-saved");
+  const btnDockSaved = $("#btn-filter-saved");
   const filterDock = $("#dock");
   const pag = $("#pagination");
 
-  if(tabAll && tabSaved){
-    tabAll.classList.toggle("active", view === "all");
-    tabSaved.classList.toggle("active", view === "saved");
+  if(tAll && tSaved){
+    tAll.classList.toggle("active", view === "all");
+    tSaved.classList.toggle("active", view === "saved");
+  }
+  if(btnDockSaved){
+    btnDockSaved.style.background = (view === "saved") ? "rgba(163,230,53,.35)" : "rgba(163,230,53,.1)";
+    btnDockSaved.style.borderColor = (view === "saved") ? "#a3e635" : "rgba(163,230,53,.3)";
   }
 
+  cleanExpiredFavorites();
+  updateFavoritesCount();
+
   if(view === "saved"){
-    cleanExpiredFavorites();
-    if(filterDock) filterDock.style.display = "none";
     if(pag) pag.style.display = "none";
   } else {
-    if(filterDock) filterDock.style.display = "";
     if(pag) pag.style.display = "";
   }
 
   renderHeader();
   renderGrid();
-  updateFavoritesCount();
 }
 
 /* ---------- autenticação & Supabase UI ---------- */
@@ -2022,10 +2033,10 @@ function boot(){
   const footLogo = $("#foot-logo");
   if(footLogo) footLogo.insertAdjacentHTML("afterbegin",'<span style="color:var(--signal);display:flex">'+I.radio.replace('width="20" height="20"','width="16" height="16"')+'</span>');
 
-  const tabAll = $("#tab-view-all");
-  if(tabAll) tabAll.addEventListener("click", ()=>switchView("all"));
-  const tabSaved = $("#tab-view-saved");
-  if(tabSaved) tabSaved.addEventListener("click", ()=>switchView("saved"));
+  const tabAll = $("#tab-all") || $("#tab-view-all");
+  if(tabAll) tabAll.onclick = ()=>switchView("all");
+  const tabSaved = $("#tab-saved") || $("#tab-view-saved");
+  if(tabSaved) tabSaved.onclick = ()=>switchView("saved");
 
   cleanExpiredFavorites();
   updateFavoritesCount();
