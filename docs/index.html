@@ -589,23 +589,7 @@ const REST = ATLAS_SB_URL + "/rest/v1";
 // Banco de dados Supabase do Usuário (Autenticação e Licitações Salvas):
 const USER_SB_URL = "https://qsmzsmqcmhdxdkiyevzl.supabase.co";
 const USER_SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzbXpzbXFjbWhkeGRraXlldnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMTE3NzIsImV4cCI6MjEwNTY4Nzc3Mn0.XA3UVuHcbZjINe-Lg9wtsCQMjlnfV_07FvzeNzEkqPM";
-// Quantidade adaptativa de cards por página:
-// Ao afastar a página (zoom out) ou em telas maiores, exibe múltiplos cards lado a lado.
-function getPageSize(){
-  if(showAll) return 1000;
-  const w = window.innerWidth;
-  if(w >= 1440) return 12; // 3 ou 4 colunas ao afastar o zoom
-  if(w >= 900) return 6;   // 2 colunas
-  return 4;                // 1 coluna em telas compactas
-}
-let PAGE_SIZE = getPageSize();
-window.addEventListener("resize", () => {
-  const next = getPageSize();
-  if(next !== PAGE_SIZE && !showAll){
-    PAGE_SIZE = next;
-    runSearch();
-  }
-});
+let PAGE_SIZE = 12;
 
 const UFS = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"];
 const MODALIDADES = [
@@ -692,6 +676,24 @@ function normTerm(s){ return s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCa
 const EMPTY = {q:"",uf:"",municipio:"",modalidades:[],portais:[],encerramentoDe:"",encerramentoAte:"",valorMin:"",valorMax:"",sort:"encerramento_asc"};
 let F = {...EMPTY};
 let page = 1, loading=false, result=null, errorMsg=null, showAll=false;
+
+function getPageSize(){
+  if(showAll) return 1000;
+  const w = (typeof window !== "undefined" && window.innerWidth) ? window.innerWidth : 1200;
+  if(w >= 1440) return 12;
+  if(w >= 900) return 6;
+  return 4;
+}
+PAGE_SIZE = getPageSize();
+if(typeof window !== "undefined"){
+  window.addEventListener("resize", () => {
+    const next = getPageSize();
+    if(next !== PAGE_SIZE && !showAll){
+      PAGE_SIZE = next;
+      runSearch();
+    }
+  });
+}
 let currentView = "all"; // "all" | "saved"
 let favorites = load("radar:favorites");
 let savedSearches = load("radar:savedSearches");
