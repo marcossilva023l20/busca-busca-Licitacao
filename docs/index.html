@@ -1664,9 +1664,25 @@ function openDrawer(l){
       if(!its.length){
         z.innerHTML='<p style="margin-top:.5rem;font-size:13px;color:rgba(139,152,169,.7)">Itens não disponíveis na base pública.</p>';
       } else {
-        z.innerHTML='<div class="itab"><table><thead><tr><th>#</th><th>Item / Descrição</th><th style="text-align:right">Qtd.</th><th style="text-align:right">V. Unitário</th><th style="text-align:right">Vlr. total</th></tr></thead><tbody>'+
-          its.slice(0,60).map((it,idx)=>'<tr><td class="td-m">'+(it.numero_item!=null?it.numero_item:idx+1)+'</td><td><p style="font-weight:500;color:#fff;line-height:1.4">'+esc(it.descricao||it.titulo||l.resumo||l.titulo||"—")+'</p>'+(it.titulo&&it.descricao&&it.titulo!==it.descricao?'<p style="font-size:11.5px;color:var(--fog);margin-top:2px">'+esc(it.titulo)+'</p>':"")+'</td><td class="td-m" style="text-align:right">'+(it.quantidade!=null?esc(String(it.quantidade))+" "+esc(it.unidade||""):"—")+'</td><td class="td-m" style="text-align:right;color:rgba(217,249,157,.85)">'+(it.valor_unitario!=null?fmtBRL(it.valor_unitario):"—")+'</td><td class="td-v">'+(it.valor_total!=null?fmtBRL(it.valor_total):"—")+'</td></tr>').join("")+
-        '</tbody></table>'+(its.length>60?'<p class="more-note">+ '+(its.length-60)+' itens — veja todos no sistema de origem</p>':"")+'</div>';
+        // Ordenação estritamente numérica dos itens (1, 2, 3 ... 10, 11)
+        const sortedItems = its.slice().sort((a,b)=>{
+          const na = a.numero_item != null ? Number(a.numero_item) : 0;
+          const nb = b.numero_item != null ? Number(b.numero_item) : 0;
+          return na - nb;
+        });
+
+        z.innerHTML='<div class="itab"><table><thead><tr><th style="width:40px">#</th><th>Item</th><th style="text-align:right">Qtd.</th><th style="text-align:right">V. Unitário</th><th style="text-align:right">Vlr. total</th></tr></thead><tbody>'+
+          sortedItems.slice(0,100).map((it,idx)=>{
+            const itemNum = it.numero_item != null ? it.numero_item : (idx+1);
+            // Exibir somente o item em si
+            const itemNome = it.titulo || it.descricao || l.resumo || l.titulo || "—";
+            return '<tr><td class="td-m" style="font-weight:600;color:#fff">'+itemNum+'</td>'+
+              '<td><p style="font-weight:500;color:#fff;line-height:1.45">'+esc(itemNome)+'</p></td>'+
+              '<td class="td-m" style="text-align:right">'+(it.quantidade!=null?esc(String(it.quantidade))+" "+esc(it.unidade||""):"—")+'</td>'+
+              '<td class="td-m" style="text-align:right;color:rgba(217,249,157,.85)">'+(it.valor_unitario!=null?fmtBRL(it.valor_unitario):"—")+'</td>'+
+              '<td class="td-v">'+(it.valor_total!=null?fmtBRL(it.valor_total):"—")+'</td></tr>';
+          }).join("")+
+        '</tbody></table>'+(sortedItems.length>100?'<p class="more-note">+ '+(sortedItems.length-100)+' itens — veja todos no sistema de origem</p>':"")+'</div>';
       }
     }
 

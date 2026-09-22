@@ -145,7 +145,12 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((d: LicitacaoDetail) => {
         setDetail(d);
-        setItens(d.itens ?? []);
+        const sorted = (d.itens ?? []).slice().sort((a, b) => {
+          const na = a.numeroItem != null ? Number(a.numeroItem) : 0;
+          const nb = b.numeroItem != null ? Number(b.numeroItem) : 0;
+          return na - nb;
+        });
+        setItens(sorted);
         setDocumentos(d.documentos ?? []);
       })
       .catch(() => {})
@@ -357,7 +362,7 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                       <thead>
                         <tr className="border-b border-line bg-panel-2/60 text-[10.5px] uppercase tracking-wider text-fog">
                           <th className="px-3 py-2 font-semibold">#</th>
-                          <th className="px-3 py-2 font-semibold">Item / Descrição</th>
+                          <th className="px-3 py-2 font-semibold">Item</th>
                           <th className="px-3 py-2 text-right font-semibold">Qtd.</th>
                           <th className="px-3 py-2 text-right font-semibold">V. Unitário</th>
                           <th className="px-3 py-2 text-right font-semibold">Vlr. total</th>
@@ -368,12 +373,9 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                           <tr key={idx} className="border-b border-line/50 last:border-0 hover:bg-white/[0.03]">
                             <td className="font-mono px-3 py-2 text-fog">{it.numeroItem ?? idx + 1}</td>
                             <td className="px-3 py-2 text-mist">
-                              <p className="line-clamp-2 font-medium text-white">
-                                {it.descricao ?? it.titulo ?? l.resumo ?? l.titulo ?? "—"}
+                              <p className="font-medium text-white">
+                                {it.titulo ?? it.descricao ?? l.resumo ?? l.titulo ?? "—"}
                               </p>
-                              {it.titulo && it.descricao && it.titulo !== it.descricao && (
-                                <p className="line-clamp-1 mt-0.5 text-[11px] text-fog">{it.titulo}</p>
-                              )}
                             </td>
                             <td className="font-mono px-3 py-2 text-right text-fog">
                               {it.quantidade != null ? `${it.quantidade} ${it.unidade ?? ""}` : "—"}
