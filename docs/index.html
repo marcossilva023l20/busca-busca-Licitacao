@@ -1297,7 +1297,7 @@ function attachMultiSelect(root,{placeholder,options,selected:sel0,onChange}){
   let selected=sel0.slice(), open=false, query="";
   function onDoc(ev){ if(open && !root.contains(ev.target)){ open=false; render(); } }
   document.addEventListener("mousedown",onDoc);
-  function change(next){ selected=next; onChange(next); render(); }
+  function change(next){ selected=next; showAll=false; onChange(next); render(); }
   function render(){
     root.classList.toggle("open",open);
     const btnLabel=selected.length? selected.length+" selecionada"+(selected.length>1?"s":"") : placeholder;
@@ -1375,7 +1375,13 @@ function renderHeader(){
   let title="Buscando licitações…";
   let src="";
   if(result){
-    const countTxt = showAll ? ('<span class="n">'+result.items.length+'</span> de <span class="n">'+result.total.toLocaleString("pt-BR")+'</span> licitações (todas em uma só página)') : ('<span class="n">'+result.total.toLocaleString("pt-BR")+'</span> licitaç'+(result.total===1?"ão aberta":"ões abertas"));
+    const tot = result.total || 0;
+    let countTxt = "";
+    if(showAll){
+      countTxt = '<span class="n">'+tot.toLocaleString("pt-BR")+'</span> licitaç'+(tot===1?"ão encontrada":"ões encontradas");
+    } else {
+      countTxt = '<span class="n">'+tot.toLocaleString("pt-BR")+'</span> licitaç'+(tot===1?"ão aberta":"ões abertas");
+    }
     title = countTxt;
     src = '<span class="src-badge">'+I.db+(result.source==="atlas"?"Base Atlas · PNCP":"API PNCP (direto)")+'</span>';
   }
@@ -1548,7 +1554,7 @@ function pageWindow(p,t){
 
 function renderPagination(){
   const nav=$("#pgn"); if(!nav) return;
-  if(!result||showAll||result.totalPages<=1){ nav.innerHTML=showAll?'<p class="ms-empty" style="text-align:center;width:100%;font-size:12px;color:var(--fog)">Exibindo todos os resultados ('+result.items.length+' licitações) em uma única página.</p>':""; return; }
+  if(!result||showAll||result.totalPages<=1){ nav.innerHTML=showAll?'<p class="ms-empty" style="text-align:center;width:100%;font-size:12px;color:var(--fog)">Exibindo todos os resultados em uma única página.</p>':""; return; }
   const p=result.page,t=result.totalPages;
   nav.innerHTML='<button type="button" data-p="'+(p-1)+'" '+(p<=1?"disabled":"")+' aria-label="Página anterior">'+I.chevL+'</button>'+
     pageWindow(p,t).map(x=>x==="…"?'<span class="dots">…</span>':'<button type="button" data-p="'+x+'" class="'+(x===p?"cur":"")+'">'+x+'</button>').join("")+
