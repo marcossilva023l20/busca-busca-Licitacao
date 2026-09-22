@@ -89,7 +89,7 @@ main{padding-bottom:6rem}
 .saved-chip .apply:hover{color:#d9f99d}
 .saved-chip .rm{border-radius:999px;padding:.2rem;color:rgba(139,152,169,.6);display:flex}
 .saved-chip .rm:hover{color:var(--danger)}
-.dock-sticky{position:sticky;top:80px;z-index:30}
+.dock-sticky{position:relative;z-index:10;margin-bottom:1.5rem}
 .dock{border-radius:16px;padding:1rem;box-shadow:0 25px 50px -12px rgba(0,0,0,.4)}
 @media(min-width:640px){.dock{padding:1.25rem}}
 .search-row{position:relative;flex:1;min-width:260px}
@@ -170,7 +170,8 @@ select.field option{background:var(--panel2);color:var(--mist)}
 .csv-btn:disabled{opacity:.4;cursor:not-allowed}
 
 /* cards */
-.grid-cards{display:grid;grid-template-columns:1fr;gap:1.25rem;max-width:960px;margin:0 auto}
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 480px), 1fr));gap:1.5rem;max-width:1600px;margin:0 auto;width:100%}
+@media(max-width:640px){.grid-cards{grid-template-columns:1fr;gap:1rem}}
 .card{position:relative;display:flex;height:100%;cursor:pointer;flex-direction:column;border-radius:16px;border:1px solid var(--line);background:rgba(12,17,23,.8);padding:1.25rem;transition:transform .35s cubic-bezier(.22,1,.36,1),border-color .3s,box-shadow .4s;animation:fadeUp .45s both}
 .card:hover{transform:translateY(-4px);border-color:rgba(163,230,53,.45);box-shadow:0 18px 44px -18px rgba(163,230,53,.16),0 8px 28px -12px rgba(0,0,0,.7)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
@@ -318,6 +319,21 @@ footer .fb{border-top:1px solid rgba(28,37,48,.5);padding:1rem;text-align:center
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* Auth, Tabs & UI Enhancements */
+/* Auth Modal and Overlays */
+.auth-modal-overlay{position:fixed;inset:0;background:rgba(3,7,18,.8);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:9999;display:none;align-items:center;justify-content:center;padding:1rem;opacity:0;transition:opacity .25s ease}
+.auth-modal-overlay.active{display:flex;opacity:1}
+.auth-modal-box{position:relative;width:100%;max-width:440px;background:#0b0f17;border:1px solid rgba(163,230,53,.25);box-shadow:0 25px 60px -15px rgba(0,0,0,.9),0 0 35px -5px rgba(163,230,53,.15);border-radius:20px;padding:2rem;color:#f8fafc;animation:authPopIn .25s ease-out}
+@keyframes authPopIn{from{transform:scale(.95) translateY(10px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.auth-modal-close{position:absolute;top:1.25rem;right:1.25rem;background:none;border:none;color:#94a3b8;font-size:24px;line-height:1;cursor:pointer;padding:.25rem;border-radius:8px;transition:.2s}
+.auth-modal-close:hover{color:#fff;background:rgba(255,255,255,.08)}
+.auth-modal-header{margin-bottom:1.5rem}
+.auth-modal-header h3{font-family:var(--fd);font-size:22px;font-weight:700;color:#fff;margin-bottom:.35rem;letter-spacing:-.02em}
+.auth-modal-header p{font-size:13.5px;color:#94a3b8;line-height:1.5}
+.auth-field{display:flex;flex-direction:column;gap:.4rem}
+.auth-field label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8}
+.auth-field input{height:44px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(17,24,39,.9);padding:0 1rem;color:#fff;font-size:14px;outline:none;transition:.2s}
+.auth-field input:focus{border-color:#a3e635;box-shadow:0 0 0 3px rgba(163,230,53,.15)}
+
 .nav-actions{display:flex;align-items:center;gap:.6rem}
 .auth-btn{display:inline-flex;align-items:center;gap:.45rem;border-radius:9px;padding:.5rem .85rem;font-size:13px;font-weight:600;transition:.2s;cursor:pointer;border:1px solid var(--line);background:rgba(17,23,34,.7);color:var(--mist)}
 .auth-btn:hover{border-color:rgba(163,230,53,.5);color:#fff}
@@ -568,7 +584,23 @@ function parseUasgAndUnidade(orgao, id, linkPncp, linkSistemaOrigem, unidadeNome
 const SB_URL = "https://qsmzsmqcmhdxdkiyevzl.supabase.co";
 const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzbXpzbXFjbWhkeGRraXlldnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMTE3NzIsImV4cCI6MjEwNTY4Nzc3Mn0.XA3UVuHcbZjINe-Lg9wtsCQMjlnfV_07FvzeNzEkqPM";
 const REST = SB_URL + "/rest/v1";
-const PAGE_SIZE = 1;
+// Quantidade adaptativa de cards por página:
+// Ao afastar a página (zoom out) ou em telas maiores, exibe múltiplos cards lado a lado.
+function getPageSize(){
+  if(showAll) return 1000;
+  const w = window.innerWidth;
+  if(w >= 1440) return 12; // 3 ou 4 colunas ao afastar o zoom
+  if(w >= 900) return 6;   // 2 colunas
+  return 4;                // 1 coluna em telas compactas
+}
+let PAGE_SIZE = getPageSize();
+window.addEventListener("resize", () => {
+  const next = getPageSize();
+  if(next !== PAGE_SIZE && !showAll){
+    PAGE_SIZE = next;
+    runSearch();
+  }
+});
 
 const UFS = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"];
 const MODALIDADES = [
@@ -1739,22 +1771,22 @@ function renderAuthNav(){
     const email = currentUser.email || "Usuário";
     const initial = (email[0] || "U").toUpperCase();
     slot.innerHTML =
-      '<div class="user-badge" id="user-profile-btn" title="Conectado como '+esc(email)+'">' +
-        '<div class="user-avatar">'+esc(initial)+'</div>' +
-        '<span style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(email)+'</span>' +
+      '<div class="user-badge" id="user-profile-btn" style="cursor:pointer" title="Conectado como '+esc(email)+'"> ' +
+        '<div class="avatar">'+esc(initial)+'</div>' +
+        '<span style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(email)+'</span>' +
       '</div>' +
       '<button type="button" class="auth-btn auth-btn-secondary" id="btn-auth-logout" title="Sair">'+I.logOut+'<span>Sair</span></button>';
 
     const btnLogout = $("#btn-auth-logout");
-    if(btnLogout) btnLogout.addEventListener("click", logoutUser);
+    if(btnLogout) btnLogout.onclick = logoutUser;
 
     const btnProf = $("#user-profile-btn");
-    if(btnProf) btnProf.addEventListener("click", openConfigModal);
+    if(btnProf) btnProf.onclick = openConfigModal;
   } else {
     slot.innerHTML =
-      '<button type="button" class="auth-btn auth-btn-secondary" id="btn-auth-open-login">'+I.logIn+'<span>Entrar / Cadastrar</span></button>';
+      '<button type="button" class="auth-btn auth-btn-primary" id="btn-auth-open-login" onclick="openAuthModal(\'login\')">'+I.logIn+'<span>Entrar / Cadastrar</span></button>';
     const btnLogin = $("#btn-auth-open-login");
-    if(btnLogin) btnLogin.addEventListener("click", ()=>openAuthModal("login"));
+    if(btnLogin) btnLogin.onclick = () => openAuthModal("login");
   }
 }
 
