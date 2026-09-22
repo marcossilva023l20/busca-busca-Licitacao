@@ -712,7 +712,14 @@ function getSupabase(){
     const url = (customSupabaseConfig && customSupabaseConfig.url) || USER_SB_URL;
     const key = (customSupabaseConfig && customSupabaseConfig.key) || USER_SB_KEY;
     try {
-      supabaseClient = window.supabase.createClient(url, key);
+      supabaseClient = window.supabase.createClient(url, key, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          storage: window.localStorage
+        }
+      });
     } catch(e){
       console.warn("Supabase init error:", e);
     }
@@ -812,13 +819,33 @@ async function syncRemoteFavorites(){
           .catch(()=>{});
       }
 
-      // Mescla com favoritos locais mantendo unicidade
-      const mergedMap = new Map();
-      validRemote.forEach(r => mergedMap.set(r.id, r));
-      favorites.forEach(f => {
-        if(!mergedMap.has(f.id)) mergedMap.set(f.id, f);
-      });
-      favorites = Array.from(mergedMap.values());
+      // Ao acessar em qualquer computador, prioriza as licitações salvas na conta do Supabase
+      const remoteMap = new Map();
+      validRemote.forEach(r => remoteMap.set(r.id, r));
+
+      // Envia para o Supabase itens que foram favoritados offline antes do login
+      for(const f of favorites){
+        if(!remoteMap.has(f.id)){
+          sb.from("licitacoes_salvas").upsert({
+            user_id: currentUser.id,
+            numero_controle_pncp: f.id,
+            titulo: f.titulo,
+            resumo: f.resumo || null,
+            orgao: f.orgao,
+            uf: f.uf,
+            municipio: f.municipio,
+            modalidade_nome: f.modalidadeNome,
+            portal_nome: f.portalNome,
+            data_encerramento: f.dataEncerramento,
+            link_pncp: f.linkPncp,
+            link_sistema_origem: f.linkSistemaOrigem,
+            valor_estimado: f.valorEstimado
+          }, { onConflict: "user_id,numero_controle_pncp" }).catch(()=>{});
+          remoteMap.set(f.id, f);
+        }
+      }
+
+      favorites = Array.from(remoteMap.values());
       persist("radar:favorites", favorites);
       updateFavoritesCount();
       if(currentView === "saved") { renderGrid(); renderHeader(); }
@@ -1677,6 +1704,8 @@ async function toggleFavorite(l){
         link_pncp: l.linkPncp,
         link_sistema_origem: l.linkSistemaOrigem,
         valor_estimado: l.valorEstimado
+      }, { onConflict: "user_id,numero_controle_pncp" }).then(({error})=>{
+        if(error) console.warn("Erro ao salvar no Supabase:", error);
       }).catch(err=>console.warn("Save remote error:", err));
     }
   }
@@ -1909,24 +1938,36 @@ async function handleAuthSubmit(e){
       if(error){
         toast("Erro ao cadastrar: " + error.message);
       } else {
-        toast("Cadastro realizado com sucesso!");
-        closeAuthModal();
-        if(data.user){
+        if(data.session){
           currentUser = data.user;
           onUserLoggedIn(data.user);
+          closeAuthModal();
+          toast("Conta criada e conectada com sucesso!");
+        } else if(data.user && (!data.user.identities || data.user.identities.length === 0)){
+          toast("Este e-mail já está cadastrado. Faça login.");
+          openAuthModal("login");
+        } else {
+          closeAuthModal();
+          toast("Conta criada! Se o Supabase exigir confirmação, verifique seu e-mail.");
         }
       }
     } else {
       const { data, error } = await sb.auth.signInWithPassword({ email, password });
       if(error){
-        toast("Falha no login: " + error.message);
+        if(error.message.includes("Email not confirmed")){
+          toast("E-mail ainda não confirmado no Supabase. Desative 'Confirm email' nas configurações ou confirme a mensagem.");
+        } else if(error.message.includes("Invalid login credentials")){
+          toast("E-mail ou senha incorretos.");
+        } else {
+          toast("Falha no login: " + error.message);
+        }
       } else {
-        toast("Login realizado com sucesso!");
         closeAuthModal();
         if(data.user){
           currentUser = data.user;
           onUserLoggedIn(data.user);
         }
+        toast("Login realizado com sucesso!");
       }
     }
   } catch(err){
