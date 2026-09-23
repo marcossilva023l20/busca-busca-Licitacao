@@ -1053,8 +1053,9 @@ async function fetchDetail(id, linkPncp, linkSistemaOrigem){
           const list=Array.isArray(dIt)?dIt:(Array.isArray(dIt&&dIt.data)?dIt.data:[]);
           items=list.map(it=>({
             numero_item:it.numeroItem,
-            titulo:it.descricao||it.descricaoItem||it.especificacao||it.titulo||null,
-            descricao:it.descricao||it.descricaoItem||it.especificacao||it.titulo||null,
+            titulo:it.descricaoItem||it.descricao||it.especificacao||null,
+            descricao:it.descricaoItem||it.descricao||it.especificacao||null,
+            especificacao:it.especificacao||it.descricaoItem||null,
             quantidade:it.quantidade,
             unidade:it.unidadeMedida,
             valor_unitario:it.valorUnitarioEstimado,
@@ -1674,8 +1675,18 @@ function openDrawer(l){
         z.innerHTML='<div class="itab"><table><thead><tr><th style="width:40px">#</th><th>Item</th><th style="text-align:right">Qtd.</th><th style="text-align:right">V. Unitário</th><th style="text-align:right">Vlr. total</th></tr></thead><tbody>'+
           sortedItems.slice(0,100).map((it,idx)=>{
             const itemNum = it.numero_item != null ? it.numero_item : (idx+1);
-            // Exibir somente o item em si
-            const itemNome = it.titulo || it.descricao || l.resumo || l.titulo || "—";
+            // Exibir estritamente a especificação/nome do item em si (nunca a descrição da licitação)
+            let itemNome = it.descricao || it.especificacao || it.titulo || ("Item " + itemNum);
+            // Se o campo for idêntico ao título da licitação ou ao resumo da licitação, descartar para não puxar o objeto da licitação
+            if((l.titulo && itemNome.trim() === l.titulo.trim()) || (l.resumo && itemNome.trim() === l.resumo.trim())){
+              if(it.descricao && it.descricao.trim() !== l.titulo.trim() && it.descricao.trim() !== (l.resumo||"").trim()){
+                itemNome = it.descricao;
+              } else if(it.especificacao && it.especificacao.trim() !== l.titulo.trim()){
+                itemNome = it.especificacao;
+              } else {
+                itemNome = "Item " + itemNum;
+              }
+            }
             return '<tr><td class="td-m" style="font-weight:600;color:#fff">'+itemNum+'</td>'+
               '<td><p style="font-weight:500;color:#fff;line-height:1.45">'+esc(itemNome)+'</p></td>'+
               '<td class="td-m" style="text-align:right">'+(it.quantidade!=null?esc(String(it.quantidade))+" "+esc(it.unidade||""):"—")+'</td>'+

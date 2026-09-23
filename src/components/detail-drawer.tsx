@@ -374,7 +374,17 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                             <td className="font-mono px-3 py-2 text-fog">{it.numeroItem ?? idx + 1}</td>
                             <td className="px-3 py-2 text-mist">
                               <p className="font-medium text-white">
-                                {it.titulo ?? it.descricao ?? l.resumo ?? l.titulo ?? "—"}
+                                {(() => {
+                                  let nome = it.descricao ?? it.titulo ?? `Item ${it.numeroItem ?? idx + 1}`;
+                                  if ((l.titulo && nome.trim() === l.titulo.trim()) || (l.resumo && nome.trim() === l.resumo.trim())) {
+                                    if (it.descricao && it.descricao.trim() !== l.titulo.trim()) {
+                                      nome = it.descricao;
+                                    } else {
+                                      nome = `Item ${it.numeroItem ?? idx + 1}`;
+                                    }
+                                  }
+                                  return nome;
+                                })()}
                               </p>
                             </td>
                             <td className="font-mono px-3 py-2 text-right text-fog">
