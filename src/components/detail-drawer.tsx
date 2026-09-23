@@ -1,121 +1,21 @@
-function extractNumeroEditalDrawer(l: Licitacao, detail?: LicitacaoDetail | null): string {
-  if (detail?.numeroCompra) {
-    const nc = String(detail.numeroCompra).trim();
-    if (detail.anoCompra && !nc.includes("/")) {
-      return `${nc}/${detail.anoCompra}`;
-    }
-    return nc;
-  }
-  if (detail?.numeroProcesso) {
-    return String(detail.numeroProcesso).trim();
-  }
-
-  const sources = [
-    l.titulo,
-    l.resumo,
-    detail?.licitacao?.resumo,
-    ...(detail?.documentos ? detail.documentos.map((d) => `${d.titulo} ${d.url ?? ""}`) : []),
-    l.linkSistemaOrigem,
-    l.linkPncp,
-  ];
-
-  for (const s of sources) {
-    if (!s) continue;
-    const mNumprp = s.match(/[?&]numprp=(\d{1,6})(\d{4})\b/i);
-    if (mNumprp) return `${parseInt(mNumprp[1], 10)}/${mNumprp[2]}`;
-
-    const mCompra = s.match(/[?&]compra=\d{6}\d{2}(\d{5})(\d{4})\b/i);
-    if (mCompra) return `${parseInt(mCompra[1], 10)}/${mCompra[2]}`;
-
-    const mExp = s.match(
-      /\b(?:edital|pregao|preg[aã]o|concorr[eê]ncia|dispensa|inexigibilidade|aviso(?:\s+de\s+contrata[cç][aã]o(?:\s+direta)?)?|convite|leil[aã]o|processo(?:\s+seletivo)?)\s*(?:eletr[oô]nico|presencial)?\s*(?:n[oº°.]?\s*)?(\d{1,6}\/\d{4})\b/i,
-    );
-    if (mExp) return mExp[1];
-
-    const mExpSep = s.match(
-      /\b(?:edital|pregao|preg[aã]o|concorr[eê]ncia|dispensa|aviso|processo)\s*(?:eletr[oô]nico|presencial)?\s*(?:n[oº°.]?\s*)?(\d{1,6}[-_]\d{4})\b/i,
-    );
-    if (mExpSep) return mExpSep[1].replace("-", "/").replace("_", "/");
-
-    const mN = s.match(/\b(?:n[º°.]\s*)(\d{1,6}\/\d{4})\b/i);
-    if (mN) return mN[1];
-  }
-
-  if (l.titulo) {
-    const mTitle = l.titulo.match(/\b(\d{1,6}\/\d{4})\b/);
-    if (mTitle) return mTitle[1];
-  }
-
-  return "";
-}
-
-function extractUasg(l: Licitacao, detail?: LicitacaoDetail | null) {
-  if (detail?.uasg) return detail.uasg;
-  const sources = [
-    l.linkSistemaOrigem,
-    l.linkPncp,
-    l.id,
-    l.titulo,
-    l.resumo,
-    detail?.licitacao?.resumo,
-  ];
-  for (const s of sources) {
-    if (!s) continue;
-    const mUrl = s.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|uo)[=/](\d{5,6})/i);
-    if (mUrl) return mUrl[1];
-    const mTxt = s.match(/\b(?:uasg|ug)[\s:.-]*(\d{5,6})\b/i);
-    if (mTxt) return mTxt[1];
-    const mPref = s.match(/\b(?:comprasnet|comprasgov|siasg)[-_](\d{5,6})\b/i);
-    if (mPref) return mPref[1];
-  }
-  return "";
-}
-
-function formatUnidadeCompradora(orgao?: string | null, id?: string | null, linkPncp?: string | null, linkSistemaOrigem?: string | null) {
-  let uasg = "";
-  const sources = [linkSistemaOrigem, linkPncp, id];
-  for (const s of sources) {
-    if (!s) continue;
-    const m =
-      s.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|uo)[=/](\d{5,6})/i) ||
-      s.match(/\b(?:uasg|ug)[\s:.-]*(\d{5,6})\b/i) ||
-      s.match(/\b(?:comprasnet|comprasgov|siasg)[-_](\d{5,6})\b/i);
-    if (m) {
-      uasg = m[1];
-      break;
-    }
-  }
-
-  const nome = (orgao || "").trim();
-  if (uasg && nome) {
-    if (nome.startsWith(uasg)) return nome;
-    return `${uasg} - ${nome}`;
-  }
-  if (uasg) return uasg;
-  return nome || "—";
-}
-
 "use client";
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   CalendarClock,
-  Download,
   ExternalLink,
-  FileText,
   Gavel,
   Heart,
   Landmark,
   Lock,
   MapPin,
   PackageOpen,
-  Radar,
   Receipt,
   X,
 } from "lucide-react";
 import { PORTAL_COR } from "@/lib/constants";
-import type { Licitacao, LicitacaoItem, LicitacaoDocumento, LicitacaoDetail } from "@/lib/types";
+import type { Licitacao, LicitacaoItem } from "@/lib/types";
 import { TONE_STYLES, deadlineInfo, fmtBRL, fmtDateTime } from "@/lib/format";
 import { Spinner } from "./ui-primitives";
 
@@ -129,32 +29,24 @@ interface DetailDrawerProps {
 const ESFERA_LABEL: Record<string, string> = { F: "Federal", E: "Estadual", M: "Municipal" };
 
 export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite }: DetailDrawerProps) {
-  const [detail, setDetail] = useState<LicitacaoDetail | null>(null);
+  const [detail, setDetail] = useState<{ licitacao: Licitacao; itens: LicitacaoItem[] } | null>(null);
   const [itens, setItens] = useState<LicitacaoItem[]>([]);
-  const [documentos, setDocumentos] = useState<LicitacaoDocumento[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingItens, setLoadingItens] = useState(false);
 
   useEffect(() => {
     if (!licitacao) return;
     setDetail(null);
     setItens([]);
-    setDocumentos([]);
-    setLoading(true);
+    setLoadingItens(true);
     const ctrl = new AbortController();
     fetch(`/api/licitacoes/${encodeURIComponent(licitacao.id)}`, { signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((d: LicitacaoDetail) => {
+      .then((d: { licitacao: Licitacao; itens: LicitacaoItem[] }) => {
         setDetail(d);
-        const sorted = (d.itens ?? []).slice().sort((a, b) => {
-          const na = a.numeroItem != null ? Number(a.numeroItem) : 0;
-          const nb = b.numeroItem != null ? Number(b.numeroItem) : 0;
-          return na - nb;
-        });
-        setItens(sorted);
-        setDocumentos(d.documentos ?? []);
+        setItens(d.itens ?? []);
       })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => setLoadingItens(false));
     return () => ctrl.abort();
   }, [licitacao]);
 
@@ -251,23 +143,8 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
 
               {/* grade de infos */}
               <dl className="mt-5 grid grid-cols-2 gap-3">
-                <Info label="Unidade compradora" icon={Landmark} full>
-                  <span className="font-semibold text-white">
-                    {detail?.unidadeCompradora ?? formatUnidadeCompradora(l.orgao, l.id, l.linkPncp, l.linkSistemaOrigem)}
-                  </span>
-                </Info>
-                <Info label="Nº do Edital / Processo" icon={FileText}>
-                  <span className="font-mono font-semibold text-white">
-                    {extractNumeroEditalDrawer(l, detail) || "—"}
-                  </span>
-                </Info>
-                <Info label="UASG" icon={Receipt}>
-                  <span className="font-mono font-semibold text-lime-200">
-                    {extractUasg(l, detail) || "—"}
-                  </span>
-                </Info>
-                <Info label="Fonte" icon={Radar}>
-                  {l.portalNome ?? "PNCP"}
+                <Info label="Órgão" icon={Landmark} full>
+                  {l.orgao ?? "—"}
                 </Info>
                 <Info label="Localidade" icon={MapPin}>
                   {l.municipio ?? "—"} {l.uf ? `/ ${l.uf}` : ""}
@@ -283,7 +160,7 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                 <Info label="Abertura">{fmtDateTime(l.dataAbertura)}</Info>
               </dl>
 
-              {/* resumo / objeto */}
+              {/* resumo */}
               {l.resumo && l.resumo !== l.titulo && (
                 <div className="mt-5">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-fog">Objeto</p>
@@ -291,72 +168,21 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                 </div>
               )}
 
-              {/* documentos e anexos */}
-              <div className="mt-6">
-                <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-fog">
-                  <FileText className="h-4 w-4 text-signal/80" />
-                  Documentos e Anexos {loading ? "" : documentos.length ? `(${documentos.length})` : ""}
-                </p>
-                {loading && (
-                  <div className="mt-3 flex items-center gap-2 text-sm text-fog">
-                    <Spinner /> Carregando documentos…
-                  </div>
-                )}
-                {!loading && documentos.length === 0 && (
-                  <p className="mt-2 text-[13px] text-fog/70">Nenhum documento disponível no momento.</p>
-                )}
-                {!loading && documentos.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {documentos.map((doc, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-line bg-panel/60 p-3 transition-colors hover:border-line-2"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-[13px] font-medium text-white">{doc.titulo}</p>
-                          <div className="mt-0.5 flex items-center gap-2 text-[11px] text-fog">
-                            {doc.tipoNome && <span>{doc.tipoNome}</span>}
-                            {doc.dataPublicacao && (
-                              <>
-                                <span>•</span>
-                                <span>{fmtDateTime(doc.dataPublicacao)}</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                        {doc.url && (
-                          <a
-                            href={doc.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 rounded-lg border border-line bg-panel-2 px-3 py-1.5 text-xs font-semibold text-lime-200 transition-colors hover:border-signal/50 hover:bg-signal/15"
-                          >
-                            <Download className="h-3.5 w-3.5" />
-                            Acessar
-                          </a>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            
-
               {/* itens */}
               <div className="mt-6">
                 <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-fog">
                   <PackageOpen className="h-4 w-4 text-signal/80" />
-                  Itens da Licitação {loading ? "" : itens.length ? `(${itens.length})` : ""}
+                  Itens {loadingItens ? "" : itens.length ? `(${itens.length})` : ""}
                 </p>
-                {loading && (
+                {loadingItens && (
                   <div className="mt-3 flex items-center gap-2 text-sm text-fog">
                     <Spinner /> Carregando itens…
                   </div>
                 )}
-                {!loading && itens.length === 0 && (
+                {!loadingItens && itens.length === 0 && (
                   <p className="mt-2 text-[13px] text-fog/70">Itens não disponíveis na base pública.</p>
                 )}
-                {!loading && itens.length > 0 && (
+                {!loadingItens && itens.length > 0 && (
                   <div className="mt-3 overflow-hidden rounded-xl border border-line">
                     <table className="w-full text-left text-[12.5px]">
                       <thead>
@@ -364,7 +190,6 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                           <th className="px-3 py-2 font-semibold">#</th>
                           <th className="px-3 py-2 font-semibold">Item</th>
                           <th className="px-3 py-2 text-right font-semibold">Qtd.</th>
-                          <th className="px-3 py-2 text-right font-semibold">V. Unitário</th>
                           <th className="px-3 py-2 text-right font-semibold">Vlr. total</th>
                         </tr>
                       </thead>
@@ -373,25 +198,10 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                           <tr key={idx} className="border-b border-line/50 last:border-0 hover:bg-white/[0.03]">
                             <td className="font-mono px-3 py-2 text-fog">{it.numeroItem ?? idx + 1}</td>
                             <td className="px-3 py-2 text-mist">
-                              <p className="font-medium text-white">
-                                {(() => {
-                                  let nome = it.descricao ?? it.titulo ?? `Item ${it.numeroItem ?? idx + 1}`;
-                                  if ((l.titulo && nome.trim() === l.titulo.trim()) || (l.resumo && nome.trim() === l.resumo.trim())) {
-                                    if (it.descricao && it.descricao.trim() !== l.titulo.trim()) {
-                                      nome = it.descricao;
-                                    } else {
-                                      nome = `Item ${it.numeroItem ?? idx + 1}`;
-                                    }
-                                  }
-                                  return nome;
-                                })()}
-                              </p>
+                              <p className="clamp-2">{it.titulo ?? it.descricao ?? "—"}</p>
                             </td>
                             <td className="font-mono px-3 py-2 text-right text-fog">
                               {it.quantidade != null ? `${it.quantidade} ${it.unidade ?? ""}` : "—"}
-                            </td>
-                            <td className="font-mono px-3 py-2 text-right text-lime-200/80">
-                              {it.valorUnitario != null ? fmtBRL(it.valorUnitario) : "—"}
                             </td>
                             <td className="font-mono px-3 py-2 text-right text-lime-200/90">
                               {it.valorTotal != null ? fmtBRL(it.valorTotal) : "—"}
@@ -408,7 +218,7 @@ export function DetailDrawer({ licitacao, onClose, isFavorite, onToggleFavorite 
                   </div>
                 )}
               </div>
-</div>
+            </div>
 
             {/* ações */}
             <div className="flex flex-wrap items-center gap-2 border-t border-line p-4">

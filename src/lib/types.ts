@@ -34,26 +34,6 @@ export interface LicitacaoItem {
   valorTotal: number | null;
 }
 
-export interface LicitacaoDocumento {
-  id?: string | number | null;
-  sequencial?: number | null;
-  titulo: string;
-  tipoNome?: string | null;
-  url?: string | null;
-  dataPublicacao?: string | null;
-}
-
-export interface LicitacaoDetail {
-  licitacao: Licitacao;
-  itens: LicitacaoItem[];
-  documentos: LicitacaoDocumento[];
-  unidadeCompradora?: string | null;
-  uasg?: string | null;
-  numeroCompra?: string | number | null;
-  anoCompra?: string | number | null;
-  numeroProcesso?: string | null;
-}
-
 export interface SearchResult {
   total: number;
   page: number;

@@ -2,7 +2,13 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+<meta name="theme-color" content="#090d12" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Radar Licitações" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
 <title>Radar Licitações — Painel de Contratações e Licitações Salvas</title>
 <meta name="description" content="Busque licitações públicas em tempo real: filtre por fim do recebimento de propostas, UF, município, modalidade e sistema fonte (ComprasNet, BLL Compras, BNC e mais)." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -319,6 +325,46 @@ footer .fb{border-top:1px solid rgba(28,37,48,.5);padding:1rem;text-align:center
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* Auth, Tabs & UI Enhancements */
+
+/* Responsive Mobile & Console (Smart TVs / Game Consoles / Small Screens) */
+@media(max-width: 640px) {
+  .nav-in{flex-direction:column;gap:.75rem;padding:.75rem 1rem}
+  .nav-actions{width:100%;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+  .view-tabs{width:100%;justify-content:center}
+  .view-tab{flex:1;justify-content:center;padding:.5rem .75rem;font-size:12.5px}
+  .hero{padding:2rem 1rem 1rem}
+  .hero h1{font-size:26px;line-height:1.25}
+  .hero p.lead{font-size:13.5px}
+  .hero-visual{display:none}
+  .stats{grid-template-columns:1fr;gap:.5rem}
+  .grid2, .grid3{grid-template-columns:1fr;gap:.75rem}
+  .results-toolbar{flex-direction:column;align-items:stretch}
+  .results-toolbar .search-row{width:100%}
+  .results-toolbar .sort-wrap{width:100%;justify-content:space-between}
+  .results-toolbar select{flex:1}
+  .results-toolbar .btn-all-res{width:100%}
+  .grid-cards{grid-template-columns:1fr;gap:.85rem;padding:0}
+  .card{padding:1rem;border-radius:14px}
+  .card h3{font-size:15.5px}
+  .card-objeto{padding:.75rem;font-size:12.5px}
+  .drawer{width:100% !important;max-width:100% !important;border-radius:16px 16px 0 0}
+  .drawer-head{padding:1rem 1.25rem}
+  .drawer-body{padding:1rem 1.25rem}
+  .dgrid{grid-template-columns:1fr}
+  .itab table{font-size:11.5px}
+  .itens-controls{flex-direction:column;align-items:stretch}
+  .auth-modal-box{padding:1.5rem 1.25rem;border-radius:16px}
+}
+
+/* Console & TV Browsers (D-pad focus visibility) */
+:focus-visible {
+  outline: 2.5px solid #a3e635 !important;
+  outline-offset: 2px !important;
+}
+button:focus, a:focus, input:focus, select:focus {
+  outline-color: #a3e635;
+}
+
 /* Itens pagination & controls */
 .itens-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin:.75rem 0 .5rem;padding:.5rem .75rem;background:rgba(17,23,34,.7);border:1px solid var(--line);border-radius:10px}
 .itens-per-page{display:flex;align-items:center;gap:.6rem;font-size:12px;color:var(--fog)}
@@ -2280,6 +2326,50 @@ function openConfigModal(){
     toast("Credenciais do Supabase salvas!");
     modal.classList.remove("active");
     initAuth();
+  });
+}
+
+
+/* ---------- PWA & Service Worker & Console Support ---------- */
+let deferredPrompt = null;
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallAppBanner();
+});
+
+function showInstallAppBanner(){
+  if($('#pwa-install-banner') || !deferredPrompt) return;
+  const banner = document.createElement('div');
+  banner.id = 'pwa-install-banner';
+  banner.style.cssText = 'position:fixed;bottom:1rem;left:1rem;right:1rem;max-width:440px;margin:0 auto;background:#0c1117;border:1px solid rgba(163,230,53,.4);box-shadow:0 15px 35px rgba(0,0,0,.8);border-radius:14px;padding:.85rem 1rem;display:flex;align-items:center;justify-content:space-between;gap:.75rem;z-index:9000;animation:fadeUp .3s ease-out';
+  banner.innerHTML =
+    '<div style="display:flex;align-items:center;gap:.6rem">' +
+      '<div style="width:36px;height:36px;border-radius:8px;background:rgba(163,230,53,.2);color:#a3e635;display:flex;align-items:center;justify-content:center;font-weight:bold">' + I.download + '</div>' +
+      '<div><p style="font-size:13px;font-weight:700;color:#fff;margin:0">Instalar Aplicativo</p><p style="font-size:11px;color:#94a3b8;margin:0">Acesse direto da tela inicial do celular</p></div>' +
+    '</div>' +
+    '<div style="display:flex;align-items:center;gap:.4rem">' +
+      '<button type="button" id="btn-pwa-dismiss" style="background:none;border:none;color:#64748b;font-size:16px;cursor:pointer;padding:.3rem">&times;</button>' +
+      '<button type="button" id="btn-pwa-install" style="background:#a3e635;color:#090d12;font-weight:700;font-size:12px;border:none;border-radius:8px;padding:.45rem .85rem;cursor:pointer">Instalar</button>' +
+    '</div>';
+  document.body.appendChild(banner);
+
+  $('#btn-pwa-dismiss').addEventListener('click', () => { banner.remove(); });
+  $('#btn-pwa-install').addEventListener('click', async () => {
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if(choice.outcome === 'accepted'){
+        toast('Aplicativo instalado com sucesso!');
+      }
+      deferredPrompt = null;
+      banner.remove();
+    }
   });
 }
 

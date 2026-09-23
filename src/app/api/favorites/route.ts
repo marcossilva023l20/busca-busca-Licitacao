@@ -6,17 +6,11 @@ import { desc, eq } from "drizzle-orm";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  if (!db) {
-    return NextResponse.json({ favorites: [] });
-  }
   const rows = await db.select().from(favorites).orderBy(desc(favorites.createdAt));
   return NextResponse.json({ favorites: rows });
 }
 
 export async function POST(req: NextRequest) {
-  if (!db) {
-    return NextResponse.json({ error: "Banco de dados não configurado." }, { status: 503 });
-  }
   const body = (await req.json()) as {
     id?: string;
     titulo?: string;
@@ -55,9 +49,6 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!db) {
-    return NextResponse.json({ error: "Banco de dados não configurado." }, { status: 503 });
-  }
   const id = req.nextUrl.searchParams.get("id"); // numero_controle_pncp
   if (!id) return NextResponse.json({ error: "id obrigatório." }, { status: 400 });
   await db.delete(favorites).where(eq(favorites.numeroControlePncp, id));
