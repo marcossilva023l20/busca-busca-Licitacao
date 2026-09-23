@@ -319,6 +319,21 @@ footer .fb{border-top:1px solid rgba(28,37,48,.5);padding:1rem;text-align:center
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* Auth, Tabs & UI Enhancements */
+/* Itens pagination & controls */
+.itens-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin:.75rem 0 .5rem;padding:.5rem .75rem;background:rgba(17,23,34,.7);border:1px solid var(--line);border-radius:10px}
+.itens-per-page{display:flex;align-items:center;gap:.6rem;font-size:12px;color:var(--fog)}
+.itens-per-page select{background:rgba(9,13,18,.8);border:1px solid var(--line);color:#fff;border-radius:6px;padding:.25rem .5rem;font-size:12px;outline:none}
+.itens-nav{display:flex;align-items:center;gap:.35rem}
+.itens-nav-btn{background:rgba(9,13,18,.8);border:1px solid var(--line);color:var(--mist);border-radius:6px;padding:.25rem .6rem;font-size:12px;cursor:pointer;transition:.2s}
+.itens-nav-btn:hover:not(:disabled){border-color:rgba(163,230,53,.4);color:#fff}
+.itens-nav-btn:disabled{opacity:.4;cursor:not-allowed}
+.itens-page-info{font-size:12px;color:var(--fog);margin:0 .35rem}
+
+/* Clear all saved button */
+.btn-clear-saved{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem .85rem;border-radius:9px;border:1px solid rgba(248,113,113,.35);background:rgba(248,113,113,.1);color:#fca5a5;font-size:12.5px;font-weight:600;cursor:pointer;transition:.2s}
+.btn-clear-saved:hover:not(:disabled){background:rgba(248,113,113,.22);border-color:#f87171;color:#fff}
+.btn-clear-saved:disabled{opacity:.4;cursor:not-allowed}
+
 /* Auth Modal and Overlays */
 .auth-modal-overlay{position:fixed;inset:0;background:rgba(3,7,18,.8);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:9999;display:none;align-items:center;justify-content:center;padding:1rem;opacity:0;transition:opacity .25s ease}
 .auth-modal-overlay.active{display:flex;opacity:1}
@@ -1366,10 +1381,12 @@ function renderHeader(){
     let title = '<span class="n">'+count+'</span> licitaç'+(count===1?"ão salva":"ões salvas");
     let src = '<span class="src-badge" style="border-color:rgba(163,230,53,.3);color:#d9f99d">'+I.heart+(currentUser ? 'Sincronizado via Nuvem' : 'Armazenamento Local')+ '</span>';
     h.innerHTML='<div style="display:flex;align-items:center;flex-wrap:wrap">'+ '<h2>'+title+'</h2>'+src+'</div>'+
-      '<div style="display:flex;align-items:center;gap:.5rem">'+
+      '<div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">'+
+        '<button type="button" class="btn-clear-saved" id="btn-clear-all-saved" '+(count===0?"disabled":"")+'>'+I.trash+'Limpar todas as salvas</button>'+
         '<button type="button" class="csv-btn" id="btn-csv" '+(count===0?"disabled":"")+'>'+I.download+'Exportar Salvas (CSV)</button>'+
       '</div>';
     const b=$("#btn-csv"); if(b) b.addEventListener("click",exportCsv);
+    const bClear=$("#btn-clear-all-saved"); if(bClear) bClear.addEventListener("click",clearAllSaved);
     return;
   }
 
@@ -1672,28 +1689,96 @@ function openDrawer(l){
           return na - nb;
         });
 
-        z.innerHTML='<div class="itab"><table><thead><tr><th style="width:40px">#</th><th>Item</th><th style="text-align:right">Qtd.</th><th style="text-align:right">V. Unitário</th><th style="text-align:right">Vlr. total</th></tr></thead><tbody>'+
-          sortedItems.slice(0,100).map((it,idx)=>{
-            const itemNum = it.numero_item != null ? it.numero_item : (idx+1);
-            // Exibir estritamente a especificação/nome do item em si (nunca a descrição da licitação)
-            let itemNome = it.descricao || it.especificacao || it.titulo || ("Item " + itemNum);
-            // Se o campo for idêntico ao título da licitação ou ao resumo da licitação, descartar para não puxar o objeto da licitação
-            if((l.titulo && itemNome.trim() === l.titulo.trim()) || (l.resumo && itemNome.trim() === l.resumo.trim())){
-              if(it.descricao && it.descricao.trim() !== l.titulo.trim() && it.descricao.trim() !== (l.resumo||"").trim()){
-                itemNome = it.descricao;
-              } else if(it.especificacao && it.especificacao.trim() !== l.titulo.trim()){
-                itemNome = it.especificacao;
-              } else {
-                itemNome = "Item " + itemNum;
+        let itemPage = 1;
+        let itemPageSize = 10; // Padrão: 10 itens
+
+        function renderItemsTable(){
+          const totalItems = sortedItems.length;
+          const isAll = (itemPageSize === "all" || itemPageSize >= totalItems);
+          const limit = isAll ? totalItems : Number(itemPageSize);
+          const totalPages = isAll ? 1 : Math.max(1, Math.ceil(totalItems / limit));
+          if(itemPage > totalPages) itemPage = totalPages;
+          if(itemPage < 1) itemPage = 1;
+
+          const startIdx = isAll ? 0 : (itemPage - 1) * limit;
+          const endIdx = isAll ? totalItems : Math.min(startIdx + limit, totalItems);
+          const pageItems = sortedItems.slice(startIdx, endIdx);
+
+          let controlsHtml = '';
+          if(totalItems > 10){
+            controlsHtml = 
+              '<div class="itens-controls">' +
+                '<div class="itens-per-page">' +
+                  '<span>Mostrar:</span>' +
+                  '<select id="sel-item-pagesize">' +
+                    '<option value="10"'+(String(itemPageSize)==="10"?" selected":"")+'>10 itens</option>' +
+                    '<option value="50"'+(String(itemPageSize)==="50"?" selected":"")+'>50 itens</option>' +
+                    '<option value="100"'+(String(itemPageSize)==="100"?" selected":"")+'>100 itens</option>' +
+                    '<option value="all"'+(String(itemPageSize)==="all"?" selected":"")+'>Todos os itens ('+totalItems+')</option>' +
+                  '</select>' +
+                '</div>' +
+                (!isAll && totalPages > 1 ? (
+                  '<div class="itens-nav">' +
+                    '<button type="button" class="itens-nav-btn" id="btn-item-prev" '+(itemPage===1?"disabled":"")+'>Anterior</button>' +
+                    '<span class="itens-page-info">Pág. <strong>'+itemPage+'</strong> de <strong>'+totalPages+'</strong> ('+(startIdx+1)+'–'+endIdx+' de '+totalItems+')</span>' +
+                    '<button type="button" class="itens-nav-btn" id="btn-item-next" '+(itemPage===totalPages?"disabled":"")+'>Próxima</button>' +
+                  '</div>'
+                ) : '<span class="itens-page-info">Exibindo todos os '+totalItems+' itens</span>') +
+              '</div>';
+          }
+
+          z.innerHTML = controlsHtml + '<div class="itab"><table><thead><tr><th style="width:40px">#</th><th>Item</th><th style="text-align:right">Qtd.</th><th style="text-align:right">V. Unitário</th><th style="text-align:right">Vlr. total</th></tr></thead><tbody>' +
+            pageItems.map((it,idx)=>{
+              const itemNum = it.numero_item != null ? it.numero_item : (startIdx + idx + 1);
+              let itemNome = it.descricao || it.especificacao || it.titulo || ("Item " + itemNum);
+              if((l.titulo && itemNome.trim() === l.titulo.trim()) || (l.resumo && itemNome.trim() === l.resumo.trim())){
+                if(it.descricao && it.descricao.trim() !== l.titulo.trim() && it.descricao.trim() !== (l.resumo||"").trim()){
+                  itemNome = it.descricao;
+                } else if(it.especificacao && it.especificacao.trim() !== l.titulo.trim()){
+                  itemNome = it.especificacao;
+                } else {
+                  itemNome = "Item " + itemNum;
+                }
               }
-            }
-            return '<tr><td class="td-m" style="font-weight:600;color:#fff">'+itemNum+'</td>'+
-              '<td><p style="font-weight:500;color:#fff;line-height:1.45">'+esc(itemNome)+'</p></td>'+
-              '<td class="td-m" style="text-align:right">'+(it.quantidade!=null?esc(String(it.quantidade))+" "+esc(it.unidade||""):"—")+'</td>'+
-              '<td class="td-m" style="text-align:right;color:rgba(217,249,157,.85)">'+(it.valor_unitario!=null?fmtBRL(it.valor_unitario):"—")+'</td>'+
-              '<td class="td-v">'+(it.valor_total!=null?fmtBRL(it.valor_total):"—")+'</td></tr>';
-          }).join("")+
-        '</tbody></table>'+(sortedItems.length>100?'<p class="more-note">+ '+(sortedItems.length-100)+' itens — veja todos no sistema de origem</p>':"")+'</div>';
+              return '<tr><td class="td-m" style="font-weight:600;color:#fff">'+itemNum+'</td>'+
+                '<td><p style="font-weight:500;color:#fff;line-height:1.45">'+esc(itemNome)+'</p></td>'+
+                '<td class="td-m" style="text-align:right">'+(it.quantidade!=null?esc(String(it.quantidade))+" "+esc(it.unidade||""):"—")+'</td>'+
+                '<td class="td-m" style="text-align:right;color:rgba(217,249,157,.85)">'+(it.valor_unitario!=null?fmtBRL(it.valor_unitario):"—")+'</td>'+
+                '<td class="td-v">'+(it.valor_total!=null?fmtBRL(it.valor_total):"—")+'</td></tr>';
+            }).join("") +
+          '</tbody></table></div>';
+
+          const selSize = $("#sel-item-pagesize");
+          if(selSize){
+            selSize.addEventListener("change", (e)=>{
+              itemPageSize = e.target.value === "all" ? "all" : Number(e.target.value);
+              itemPage = 1;
+              renderItemsTable();
+            });
+          }
+
+          const btnPrev = $("#btn-item-prev");
+          if(btnPrev){
+            btnPrev.addEventListener("click", ()=>{
+              if(itemPage > 1){
+                itemPage--;
+                renderItemsTable();
+              }
+            });
+          }
+
+          const btnNext = $("#btn-item-next");
+          if(btnNext){
+            btnNext.addEventListener("click", ()=>{
+              if(itemPage < totalPages){
+                itemPage++;
+                renderItemsTable();
+              }
+            });
+          }
+        }
+
+        renderItemsTable();
       }
     }
 
@@ -1733,6 +1818,37 @@ function closeDrawer(){
     root.innerHTML="";
     drawerCloseTimer=null;
   },320);
+}
+
+
+/* ---------- limpar todas as licitações salvas ---------- */
+async function clearAllSaved(){
+  if(!favorites.length){
+    toast("Você não possui licitações salvas.");
+    return;
+  }
+  const confirmed = window.confirm("Deseja realmente limpar todas as licitações salvas?");
+  if(!confirmed) return;
+
+  const count = favorites.length;
+  favorites = [];
+  persist("radar:favorites", favorites);
+  updateFavoritesCount();
+
+  const sb = getSupabase();
+  if(currentUser && sb){
+    try {
+      await sb.from("licitacoes_salvas")
+        .delete()
+        .eq("user_id", currentUser.id);
+    } catch(err){
+      console.warn("Erro ao limpar salvas no Supabase:", err);
+    }
+  }
+
+  toast(count + " licitação(ões) salva(s) removida(s).");
+  renderHeader();
+  renderGrid();
 }
 
 /* ---------- favoritos & persistência Supabase ---------- */
