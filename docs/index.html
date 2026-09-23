@@ -2,8 +2,14 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Radar Licitações — Encontre pregões e licitações abertas no Brasil</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+<meta name="theme-color" content="#090d12" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Radar Licitações" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<title>Radar Licitações — Painel de Contratações e Licitações Salvas</title>
 <meta name="description" content="Busque licitações públicas em tempo real: filtre por fim do recebimento de propostas, UF, município, modalidade e sistema fonte (ComprasNet, BLL Compras, BNC e mais)." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -89,19 +95,23 @@ main{padding-bottom:6rem}
 .saved-chip .apply:hover{color:#d9f99d}
 .saved-chip .rm{border-radius:999px;padding:.2rem;color:rgba(139,152,169,.6);display:flex}
 .saved-chip .rm:hover{color:var(--danger)}
-.dock-sticky{position:sticky;top:80px;z-index:30}
+.dock-sticky{position:relative;z-index:10;margin-bottom:1.5rem}
 .dock{border-radius:16px;padding:1rem;box-shadow:0 25px 50px -12px rgba(0,0,0,.4)}
 @media(min-width:640px){.dock{padding:1.25rem}}
-.search-row{position:relative}
+.search-row{position:relative;flex:1;min-width:260px}
 .search-row svg{position:absolute;left:1rem;top:50%;transform:translateY(-50%);color:var(--fog);pointer-events:none}
-.search-row input{width:100%;height:48px;border-radius:12px;border:1px solid var(--line);background:rgba(9,13,18,.7);padding:0 1rem 0 2.75rem;font-size:15px;color:#fff;transition:.2s}
+.search-row input{width:100%;height:44px;border-radius:12px;border:1px solid var(--line);background:rgba(9,13,18,.8);padding:0 1rem 0 2.75rem;font-size:14.5px;color:#fff;transition:.2s}
 .search-row input::placeholder{color:rgba(139,152,169,.55)}
 .search-row input:focus{border-color:rgba(163,230,53,.5)}
+.results-toolbar{margin-bottom:1.25rem;display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;padding:.85rem 1rem;border-radius:14px;border:1px solid var(--line);background:rgba(17,23,34,.65);box-shadow:0 12px 30px -10px rgba(0,0,0,.35)}
+.results-toolbar .sort-wrap{display:flex;align-items:center;gap:.4rem;min-width:210px}
+.results-toolbar .btn-all-res{display:inline-flex;height:42px;align-items:center;justify-content:center;gap:.45rem;border-radius:10px;border:1px solid rgba(163,230,53,.5);background:rgba(163,230,53,.14);padding:0 1.1rem;font-size:13px;font-weight:600;color:#ecfccb;cursor:pointer;white-space:nowrap;transition:.2s}
+.results-toolbar .btn-all-res:hover{background:rgba(163,230,53,.24);border-color:rgba(163,230,53,.7);color:#fff}
 .grid2{margin-top:1rem;display:grid;grid-template-columns:1fr;gap:.75rem}
 @media(min-width:640px){.grid2{grid-template-columns:repeat(2,1fr)}}
 @media(min-width:1024px){.grid2{grid-template-columns:repeat(4,1fr)}}
 .grid3{margin-top:1rem;display:grid;grid-template-columns:1fr;gap:.75rem}
-@media(min-width:1024px){.grid3{grid-template-columns:4fr 3fr 3fr 2fr}}
+@media(min-width:768px){.grid3{grid-template-columns:1.8fr 1.2fr 1fr}}
 .flabel{margin-bottom:.4rem;display:flex;align-items:center;gap:.35rem;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--fog)}
 .flabel svg{color:rgba(163,230,53,.8)}
 .field{width:100%;height:40px;border-radius:9px;border:1px solid var(--line);background:rgba(17,23,34,.8);padding:0 .75rem;font-size:14px;color:var(--mist);transition:.2s}
@@ -166,9 +176,8 @@ select.field option{background:var(--panel2);color:var(--mist)}
 .csv-btn:disabled{opacity:.4;cursor:not-allowed}
 
 /* cards */
-.grid-cards{display:grid;grid-template-columns:1fr;gap:1rem}
-@media(min-width:768px){.grid-cards{grid-template-columns:repeat(2,1fr)}}
-@media(min-width:1200px){.grid-cards{grid-template-columns:repeat(3,1fr)}}
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 480px), 1fr));gap:1.5rem;max-width:1600px;margin:0 auto;width:100%}
+@media(max-width:640px){.grid-cards{grid-template-columns:1fr;gap:1rem}}
 .card{position:relative;display:flex;height:100%;cursor:pointer;flex-direction:column;border-radius:16px;border:1px solid var(--line);background:rgba(12,17,23,.8);padding:1.25rem;transition:transform .35s cubic-bezier(.22,1,.36,1),border-color .3s,box-shadow .4s;animation:fadeUp .45s both}
 .card:hover{transform:translateY(-4px);border-color:rgba(163,230,53,.45);box-shadow:0 18px 44px -18px rgba(163,230,53,.16),0 8px 28px -12px rgba(0,0,0,.7)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
@@ -180,8 +189,10 @@ select.field option{background:var(--panel2);color:var(--mist)}
 .heart{border:1px solid var(--line);background:none;border-radius:999px;padding:.4rem;color:var(--fog);transition:.2s;display:flex}
 .heart:hover{border-color:rgba(248,113,113,.4);color:#f87171}
 .heart.on{border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.1);color:#f87171}
-.card h3{font-family:var(--fd);margin-top:.75rem;font-size:15.5px;font-weight:600;line-height:1.4;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:.2s}
+.card h3{font-family:var(--fd);margin-top:.75rem;font-size:17px;font-weight:700;line-height:1.4;color:#fff;transition:.2s}
 .card:hover h3{color:#ecfccb}
+.card-objeto{margin-top:.85rem;padding:.9rem 1.1rem;border-radius:12px;background:rgba(17,23,34,.75);border:1px solid rgba(42,54,68,.7);font-size:13.5px;line-height:1.6;color:#e2e8f0;white-space:pre-wrap;word-break:break-word}
+.card-objeto .obj-lbl{display:flex;align-items:center;gap:.35rem;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--signal);margin-bottom:.35rem}
 .meta{margin-top:.6rem;font-size:12.5px;color:var(--fog);display:grid;gap:.25rem}
 .meta p{display:flex;align-items:flex-start;gap:.4rem}
 .meta svg{margin-top:2px;flex-shrink:0;color:rgba(139,152,169,.7)}
@@ -243,6 +254,13 @@ select.field option{background:var(--panel2);color:var(--mist)}
 .itens{margin-top:1.5rem}
 .itens .k{display:flex;align-items:center;gap:.5rem;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.14em;color:var(--fog)}
 .itens .k svg{color:rgba(163,230,53,.8)}
+.docs-list{margin-top:.75rem;display:flex;flex-direction:column;gap:.5rem}
+.doc-card{display:flex;align-items:center;justify-content:space-between;gap:.75rem;border:1px solid var(--line);background:rgba(12,17,23,.6);border-radius:12px;padding:.75rem .85rem;transition:border-color .2s}
+.doc-card:hover{border-color:var(--line2)}
+.doc-card .dt{font-size:13px;font-weight:500;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doc-card .dm{font-size:11px;color:var(--fog);margin-top:.15rem;display:flex;align-items:center;gap:.4rem}
+.doc-card .dbtn{display:inline-flex;align-items:center;gap:.35rem;border-radius:8px;border:1px solid var(--line);background:rgba(17,23,34,.7);padding:.35rem .65rem;font-size:11.5px;font-weight:600;color:#d9f99d;text-decoration:none;transition:.2s}
+.doc-card .dbtn:hover{border-color:rgba(163,230,53,.5);background:rgba(163,230,53,.15)}
 .itab{margin-top:.75rem;overflow:hidden;border:1px solid var(--line);border-radius:12px}
 table{width:100%;font-size:12.5px;text-align:left;border-collapse:collapse}
 thead tr{border-bottom:1px solid var(--line);background:rgba(17,23,34,.6)}
@@ -305,7 +323,113 @@ footer .fb{border-top:1px solid rgba(28,37,48,.5);padding:1rem;text-align:center
 .dim{opacity:.5;pointer-events:none;transition:opacity .2s}
 .toast{position:fixed;left:50%;bottom:1.5rem;z-index:100;transform:translateX(-50%) translateY(20px);border-radius:10px;padding:.6rem 1rem;font-size:13px;color:#ecfccb;background:rgba(17,23,34,.95);border:1px solid rgba(163,230,53,.4);opacity:0;transition:.25s;pointer-events:none}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Auth, Tabs & UI Enhancements */
+
+/* Responsive Mobile & Console (Smart TVs / Game Consoles / Small Screens) */
+@media(max-width: 640px) {
+  .nav-in{flex-direction:column;gap:.75rem;padding:.75rem 1rem}
+  .nav-actions{width:100%;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+  .view-tabs{width:100%;justify-content:center}
+  .view-tab{flex:1;justify-content:center;padding:.5rem .75rem;font-size:12.5px}
+  .hero{padding:2rem 1rem 1rem}
+  .hero h1{font-size:26px;line-height:1.25}
+  .hero p.lead{font-size:13.5px}
+  .hero-visual{display:none}
+  .stats{grid-template-columns:1fr;gap:.5rem}
+  .grid2, .grid3{grid-template-columns:1fr;gap:.75rem}
+  .results-toolbar{flex-direction:column;align-items:stretch}
+  .results-toolbar .search-row{width:100%}
+  .results-toolbar .sort-wrap{width:100%;justify-content:space-between}
+  .results-toolbar select{flex:1}
+  .results-toolbar .btn-all-res{width:100%}
+  .grid-cards{grid-template-columns:1fr;gap:.85rem;padding:0}
+  .card{padding:1rem;border-radius:14px}
+  .card h3{font-size:15.5px}
+  .card-objeto{padding:.75rem;font-size:12.5px}
+  .drawer{width:100% !important;max-width:100% !important;border-radius:16px 16px 0 0}
+  .drawer-head{padding:1rem 1.25rem}
+  .drawer-body{padding:1rem 1.25rem}
+  .dgrid{grid-template-columns:1fr}
+  .itab table{font-size:11.5px}
+  .itens-controls{flex-direction:column;align-items:stretch}
+  .auth-modal-box{padding:1.5rem 1.25rem;border-radius:16px}
+}
+
+/* Console & TV Browsers (D-pad focus visibility) */
+:focus-visible {
+  outline: 2.5px solid #a3e635 !important;
+  outline-offset: 2px !important;
+}
+button:focus, a:focus, input:focus, select:focus {
+  outline-color: #a3e635;
+}
+
+/* Itens pagination & controls */
+.itens-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin:.75rem 0 .5rem;padding:.5rem .75rem;background:rgba(17,23,34,.7);border:1px solid var(--line);border-radius:10px}
+.itens-per-page{display:flex;align-items:center;gap:.6rem;font-size:12px;color:var(--fog)}
+.itens-per-page select{background:rgba(9,13,18,.8);border:1px solid var(--line);color:#fff;border-radius:6px;padding:.25rem .5rem;font-size:12px;outline:none}
+.itens-nav{display:flex;align-items:center;gap:.35rem}
+.itens-nav-btn{background:rgba(9,13,18,.8);border:1px solid var(--line);color:var(--mist);border-radius:6px;padding:.25rem .6rem;font-size:12px;cursor:pointer;transition:.2s}
+.itens-nav-btn:hover:not(:disabled){border-color:rgba(163,230,53,.4);color:#fff}
+.itens-nav-btn:disabled{opacity:.4;cursor:not-allowed}
+.itens-page-info{font-size:12px;color:var(--fog);margin:0 .35rem}
+
+/* Clear all saved button */
+.btn-clear-saved{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem .85rem;border-radius:9px;border:1px solid rgba(248,113,113,.35);background:rgba(248,113,113,.1);color:#fca5a5;font-size:12.5px;font-weight:600;cursor:pointer;transition:.2s}
+.btn-clear-saved:hover:not(:disabled){background:rgba(248,113,113,.22);border-color:#f87171;color:#fff}
+.btn-clear-saved:disabled{opacity:.4;cursor:not-allowed}
+
+/* Auth Modal and Overlays */
+.auth-modal-overlay{position:fixed;inset:0;background:rgba(3,7,18,.8);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:9999;display:none;align-items:center;justify-content:center;padding:1rem;opacity:0;transition:opacity .25s ease}
+.auth-modal-overlay.active{display:flex;opacity:1}
+.auth-modal-box{position:relative;width:100%;max-width:440px;background:#0b0f17;border:1px solid rgba(163,230,53,.25);box-shadow:0 25px 60px -15px rgba(0,0,0,.9),0 0 35px -5px rgba(163,230,53,.15);border-radius:20px;padding:2rem;color:#f8fafc;animation:authPopIn .25s ease-out}
+@keyframes authPopIn{from{transform:scale(.95) translateY(10px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.auth-modal-close{position:absolute;top:1.25rem;right:1.25rem;background:none;border:none;color:#94a3b8;font-size:24px;line-height:1;cursor:pointer;padding:.25rem;border-radius:8px;transition:.2s}
+.auth-modal-close:hover{color:#fff;background:rgba(255,255,255,.08)}
+.auth-modal-header{margin-bottom:1.5rem}
+.auth-modal-header h3{font-family:var(--fd);font-size:22px;font-weight:700;color:#fff;margin-bottom:.35rem;letter-spacing:-.02em}
+.auth-modal-header p{font-size:13.5px;color:#94a3b8;line-height:1.5}
+.auth-field{display:flex;flex-direction:column;gap:.4rem}
+.auth-field label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8}
+.auth-field input{height:44px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:rgba(17,24,39,.9);padding:0 1rem;color:#fff;font-size:14px;outline:none;transition:.2s}
+.auth-field input:focus{border-color:#a3e635;box-shadow:0 0 0 3px rgba(163,230,53,.15)}
+
+.nav-actions{display:flex;align-items:center;gap:.6rem}
+.auth-btn{display:inline-flex;align-items:center;gap:.45rem;border-radius:9px;padding:.5rem .85rem;font-size:13px;font-weight:600;transition:.2s;cursor:pointer;border:1px solid var(--line);background:rgba(17,23,34,.7);color:var(--mist)}
+.auth-btn:hover{border-color:rgba(163,230,53,.5);color:#fff}
+.auth-btn-primary{border-color:rgba(163,230,53,.5);background:rgba(163,230,53,.14);color:#d9f99d}
+.auth-btn-primary:hover{background:rgba(163,230,53,.25);color:#fff}
+.user-badge{display:flex;align-items:center;gap:.5rem;padding:.35rem .75rem;border-radius:999px;border:1px solid var(--line2);background:rgba(17,23,34,.9);font-size:12px;color:#ecfccb}
+.user-badge .avatar{width:24px;height:24px;border-radius:50%;background:var(--signal);color:var(--ink);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px}
+.btn-logout{border:0;background:none;color:var(--fog);cursor:pointer;padding:.2rem;display:flex;transition:.2s}
+.btn-logout:hover{color:var(--danger)}
+
+.view-tabs{display:flex;align-items:center;gap:.35rem;padding:.3rem;background:rgba(9,13,18,.75);border:1px solid var(--line);border-radius:12px;margin:1.25rem 0 .5rem}
+.view-tab{display:inline-flex;align-items:center;gap:.45rem;padding:.55rem 1.1rem;border-radius:9px;border:0;background:none;font-size:13.5px;font-weight:600;color:var(--fog);cursor:pointer;transition:.2s}
+.view-tab:hover{color:var(--mist)}
+.view-tab.active{background:rgba(163,230,53,.15);color:#d9f99d;border:1px solid rgba(163,230,53,.35)}
+.tab-count{font-family:var(--fm);font-size:11px;padding:.1rem .45rem;border-radius:6px;background:rgba(255,255,255,.08);color:inherit}
+
+.auth-card{max-width:420px;margin:2rem auto;padding:2rem;border-radius:18px;border:1px solid var(--line);background:rgba(12,17,23,.92);box-shadow:0 20px 50px -15px rgba(0,0,0,.6)}
+.auth-title{font-family:var(--fd);font-size:22px;font-weight:700;color:#fff;text-align:center;margin-bottom:.4rem}
+.auth-sub{font-size:13px;color:var(--fog);text-align:center;margin-bottom:1.5rem;line-height:1.5}
+.auth-field{margin-bottom:1rem}
+.auth-field label{display:block;font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--fog);margin-bottom:.4rem}
+.auth-field input{width:100%;height:44px;border-radius:10px;border:1px solid var(--line);background:rgba(9,13,18,.8);padding:0 .9rem;font-size:14px;color:#fff;transition:.2s}
+.auth-field input:focus{border-color:rgba(163,230,53,.6)}
+.auth-submit{width:100%;height:46px;margin-top:.75rem;border-radius:10px;border:0;background:var(--signal);color:var(--ink);font-family:var(--fd);font-size:14.5px;font-weight:700;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:.5rem}
+.auth-submit:hover{opacity:.9;box-shadow:0 0 20px rgba(163,230,53,.3)}
+.auth-toggle{margin-top:1.25rem;text-align:center;font-size:13px;color:var(--fog)}
+.auth-toggle a{color:var(--signal);font-weight:600;text-decoration:none;margin-left:.25rem;cursor:pointer}
+.auth-toggle a:hover{text-decoration:underline}
+.auth-notice{margin-top:1rem;padding:.75rem .9rem;border-radius:10px;font-size:12px;line-height:1.45}
+.auth-notice.err{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#fca5a5}
+.auth-notice.suc{background:rgba(163,230,53,.1);border:1px solid rgba(163,230,53,.3);color:#d9f99d}
+.auth-notice.info{background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.3);color:#bae6fd}
+
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="bg-scene"></div><div class="bg-grid"></div><div class="bg-noise"></div>
@@ -319,7 +443,15 @@ footer .fb{border-top:1px solid rgba(28,37,48,.5);padding:1rem;text-align:center
         <p class="logo-sub">varredura nacional em tempo real</p>
       </div>
     </div>
-    <button class="fav-btn" id="btn-favorites" type="button"><span id="heart-icon"></span>Favoritos <span class="fav-count" id="fav-count">0</span></button>
+    <div class="nav-actions">
+      <div class="view-tabs" style="margin:0">
+        <button type="button" class="view-tab active" id="tab-all" onclick="switchView('all')">Todas as Licitações</button>
+        <button type="button" class="view-tab" id="tab-saved" onclick="switchView('saved')">Licitações Salvas <span class="tab-count" id="tab-saved-count">0</span></button>
+      </div>
+      <div id="auth-nav-slot">
+        <button class="auth-btn auth-btn-primary" id="btn-auth-open-login" onclick="openAuthModal('login')" type="button">Entrar / Cadastrar</button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -365,6 +497,7 @@ footer .fb{border-top:1px solid rgba(28,37,48,.5);padding:1rem;text-align:center
   <div class="saved-bar" id="saved-bar"></div>
   <div class="dock-sticky"><div class="glass dock" id="dock"></div></div>
   <div class="results" id="results">
+    <div class="results-toolbar" id="results-toolbar"></div>
     <div class="rh" id="result-header"></div>
     <div id="grid-wrap">
       <div class="grid-cards" id="grid"></div>
@@ -402,6 +535,105 @@ footer .fb{border-top:1px solid rgba(28,37,48,.5);padding:1rem;text-align:center
 <div class="toast" id="toast"></div>
 
 <script>
+function extractNumeroEdital(l, d){
+  // 1. Se vier do retorno detalhado da compra (API PNCP / Compras)
+  if(d){
+    const nc = d.numeroCompra || d.numero_compra;
+    const ac = d.anoCompra || d.ano_compra;
+    if(nc){
+      const ncStr = String(nc).trim();
+      if(ac && !ncStr.includes("/")) return ncStr + "/" + ac;
+      return ncStr;
+    }
+    const np = d.numeroProcesso || d.numero_processo || d.processo;
+    if(np) return String(np).trim();
+  }
+
+  // 2. Extrai de fontes textuais e links oficiais (NÃO usa o ID da contratação PNCP)
+  const sources = [
+    l && l.titulo,
+    l && l.resumo,
+    d && d.licitacao && d.licitacao.resumo,
+    ...(d && d.documentos ? d.documentos.map(doc => (doc.titulo || "") + " " + (doc.url || "")) : []),
+    l && l.linkSistemaOrigem,
+    l && l.linkPncp
+  ];
+  for(const s of sources){
+    if(!s) continue;
+    // Comprasnet URL: numprp=900082026 -> 90008/2026
+    const mNumprp = s.match(/[?&]numprp=(\d{1,6})(\d{4})\b/i);
+    if(mNumprp) return parseInt(mNumprp[1], 10) + "/" + mNumprp[2];
+
+    // Comprasnet URL: compra=15814605900082026 -> uasg(6) mod(2) aviso(5) ano(4) -> 90008/2026
+    const mCompra = s.match(/[?&]compra=\d{6}\d{2}(\d{5})(\d{4})\b/i);
+    if(mCompra) return parseInt(mCompra[1], 10) + "/" + mCompra[2];
+
+    // Padrões explícitos de instrumento convocatório
+    // Ex.: Pregão Eletrônico Nº 004/2026, Edital 14/2026, Dispensa 90001/2025, Aviso de Contratação Direta 37/2026, Processo 123/2026
+    const mExp = s.match(/\b(?:edital|pregao|preg[aã]o|concorr[eê]ncia|dispensa|inexigibilidade|aviso(?:\s+de\s+contrata[cç][aã]o(?:\s+direta)?)?|convite|leil[aã]o|processo(?:\s+seletivo)?)\s*(?:eletr[oô]nico|presencial)?\s*(?:n[oº°.]?\s*)?(\d{1,6}\/\d{4})\b/i);
+    if(mExp) return mExp[1];
+
+    const mExpSep = s.match(/\b(?:edital|pregao|preg[aã]o|concorr[eê]ncia|dispensa|aviso|processo)\s*(?:eletr[oô]nico|presencial)?\s*(?:n[oº°.]?\s*)?(\d{1,6}[-_]\d{4})\b/i);
+    if(mExpSep) return mExpSep[1].replace("-", "/").replace("_", "/");
+
+    const mN = s.match(/\b(?:n[º°.]\s*)(\d{1,6}\/\d{4})\b/i);
+    if(mN) return mN[1];
+  }
+
+  // Se o título contiver um número no padrão 90001/2026 isolado
+  if(l && l.titulo){
+    const mTitle = l.titulo.match(/\b(\d{1,6}\/\d{4})\b/);
+    if(mTitle) return mTitle[1];
+  }
+
+  return "";
+}
+
+function extractUasg(l, d){
+  if(d && d.uasg) return d.uasg;
+  const sources = [
+    l.linkSistemaOrigem,
+    l.linkPncp,
+    l.id,
+    l.titulo,
+    l.resumo,
+    (d && d.licitacao && d.licitacao.resumo)
+  ];
+  for(const s of sources){
+    if(!s) continue;
+    // URL param ou path
+    const mUrl = s.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|uo)[=/](\d{5,6})/i);
+    if(mUrl) return mUrl[1];
+    // Texto: UASG: 783200 ou UASG 783200
+    const mTxt = s.match(/\b(?:uasg|ug)[\s:.-]*(\d{5,6})\b/i);
+    if(mTxt) return mTxt[1];
+    // Prefixo Comprasnet/Siasg: COMPRASNET-783200-
+    const mPref = s.match(/\b(?:comprasnet|comprasgov|siasg)[-_](\d{5,6})\b/i);
+    if(mPref) return mPref[1];
+  }
+  return "";
+}
+
+function parseUasgAndUnidade(orgao, id, linkPncp, linkSistemaOrigem, unidadeNome){
+  let uasg = "";
+  const sources = [linkSistemaOrigem, linkPncp, id];
+  for(const s of sources){
+    if(!s) continue;
+    const m = s.match(/(?:uasg|codigouasg|co_uasg|unidade_gestora|unidadecompradora|uo)[=/](\d{5,6})/i) ||
+              s.match(/\b(?:uasg|ug)[\s:.-]*(\d{5,6})\b/i) ||
+              s.match(/\b(?:comprasnet|comprasgov|siasg)[-_](\d{5,6})\b/i);
+    if(m){ uasg = m[1]; break; }
+  }
+
+  const nome = (unidadeNome || orgao || "").trim();
+  if(uasg && nome){
+    if(nome.startsWith(uasg)) return nome;
+    return uasg + " - " + nome;
+  }
+  if(uasg) return uasg;
+  return nome || "—";
+}
+
 "use strict";
 /* ============================================================
    RADAR·LICITAÇÕES — versão estática (index.html único)
@@ -410,10 +642,15 @@ footer .fb{border-top:1px solid rgba(28,37,48,.5);padding:1rem;text-align:center
    fallback na API pública oficial do PNCP. CORS aberto: roda
    direto do navegador, sem back-end.
    ============================================================ */
-const SB_URL = "https://kkudnnbuzljloenwcjsa.supabase.co";
-const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrdWRubmJ1emxqbG9lbndjanNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2MTU2NjQsImV4cCI6MjA4NzE5MTY2NH0.ETcqBjr_9_WAludecUC4IBVjlAjIJZogTpXt-hG0koY";
-const REST = SB_URL + "/rest/v1";
-const PAGE_SIZE = 24;
+// Fonte pública de consulta das licitações (Base aberta Atlas Licitações / PNCP):
+const ATLAS_SB_URL = "https://kkudnnbuzljloenwcjsa.supabase.co";
+const ATLAS_SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrdWRubmJ1emxqbG9lbndjanNhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2MTU2NjQsImV4cCI6MjA4NzE5MTY2NH0.ETcqBjr_9_WAludecUC4IBVjlAjIJZogTpXt-hG0koY";
+const REST = ATLAS_SB_URL + "/rest/v1";
+
+// Banco de dados Supabase do Usuário (Autenticação e Licitações Salvas):
+const USER_SB_URL = "https://qsmzsmqcmhdxdkiyevzl.supabase.co";
+const USER_SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFzbXpzbXFjbWhkeGRraXlldnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMTE3NzIsImV4cCI6MjEwNTY4Nzc3Mn0.XA3UVuHcbZjINe-Lg9wtsCQMjlnfV_07FvzeNzEkqPM";
+let PAGE_SIZE = 12;
 
 const UFS = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT","PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO"];
 const MODALIDADES = [
@@ -443,7 +680,7 @@ const PORTAIS = [
   {key:"outros-pncp",nome:"Outros Portais",cor:"#94a3b8"}
 ];
 const PORTAL_COR = Object.fromEntries(PORTAIS.map(p=>[p.key,p.cor]));
-const PRESETS = [{label:"Hoje",dias:0},{label:"48h",dias:2},{label:"7 dias",dias:7},{label:"15 dias",dias:15},{label:"30 dias",dias:30}];
+const PRESETS = [{label:"Hoje",dias:0},{label:"Amanhã",dias:1},{label:"48h",dias:2},{label:"7 dias",dias:7},{label:"15 dias",dias:15},{label:"30 dias",dias:30}];
 const ESFERA = {F:"Federal",E:"Estadual",M:"Municipal"};
 
 /* ---------- ícones (Lucide, inline) ---------- */
@@ -468,6 +705,7 @@ const I = {
   trash:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
   ext:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>',
   download:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>',
+  file:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>',
   landmark:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>',
   gavel:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 12.5-8 8a2.119 2.119 0 1 1-3-3l8-8"/><path d="m16 16 6-6"/><path d="m8 8 6-6"/><path d="m9 7 8 8"/><path d="m21 11-8-8"/></svg>',
   lock:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
@@ -475,7 +713,10 @@ const I = {
   db:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>',
   alert:'<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#f87171"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>',
   fsearch:'<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(139,152,169,.6)"><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M4.268 21a2 2 0 0 0 1.727 1H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v3"/><path d="m9 18-1.5-1.5"/><circle cx="5" cy="14" r="3"/></svg>',
-  receipt:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>'
+  receipt:'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M14 8H8"/><path d="M16 12H8"/><path d="M13 16H8"/></svg>',
+  user:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  logIn:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>',
+  logOut:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>'
 };
 
 /* ---------- utils ---------- */
@@ -492,13 +733,220 @@ function ilike(t){ return "*"+t.replace(/[*(),%_\\]/g," ").trim().replace(/\s+/g
 /* normaliza p/ full-text search: minúsculas, sem acentos, só letras/números/espaços */
 function normTerm(s){ return s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^\p{L}\p{N} ]/gu," ").replace(/\s+/g," ").trim(); }
 
-/* ---------- estado ---------- */
+/* ---------- estado & autenticação ---------- */
 const EMPTY = {q:"",uf:"",municipio:"",modalidades:[],portais:[],encerramentoDe:"",encerramentoAte:"",valorMin:"",valorMax:"",sort:"encerramento_asc"};
 let F = {...EMPTY};
-let page = 1, loading=false, result=null, errorMsg=null;
+let page = 1, loading=false, result=null, errorMsg=null, showAll=false;
+
+function getPageSize(){
+  if(showAll) return 1000;
+  const w = (typeof window !== "undefined" && window.innerWidth) ? window.innerWidth : 1200;
+  if(w >= 1440) return 12;
+  if(w >= 900) return 6;
+  return 4;
+}
+PAGE_SIZE = getPageSize();
+if(typeof window !== "undefined"){
+  window.addEventListener("resize", () => {
+    const next = getPageSize();
+    if(next !== PAGE_SIZE && !showAll){
+      PAGE_SIZE = next;
+      runSearch();
+    }
+  });
+}
+let currentView = "all"; // "all" | "saved"
 let favorites = load("radar:favorites");
 let savedSearches = load("radar:savedSearches");
 let firstTotal = null;
+
+// Supabase Auth & Config
+let supabaseClient = null;
+let currentUser = null;
+let savedLicitacoesRemote = [];
+let authMode = "login"; // "login" | "signup"
+let customSupabaseConfig = load("radar:supabaseConfig") || null;
+
+function getSupabase(){
+  if(supabaseClient) return supabaseClient;
+  if(window.supabase){
+    const url = (customSupabaseConfig && customSupabaseConfig.url) || USER_SB_URL;
+    const key = (customSupabaseConfig && customSupabaseConfig.key) || USER_SB_KEY;
+    try {
+      supabaseClient = window.supabase.createClient(url, key, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          storage: window.localStorage
+        }
+      });
+    } catch(e){
+      console.warn("Supabase init error:", e);
+    }
+  }
+  return supabaseClient;
+}
+
+function initAuth(){
+  const sb = getSupabase();
+  if(sb && sb.auth){
+    sb.auth.getSession().then(({data:{session}})=>{
+      if(session && session.user){
+        currentUser = session.user;
+        onUserLoggedIn(session.user);
+      } else {
+        currentUser = null;
+        renderAuthNav();
+      }
+    }).catch(()=>{
+      renderAuthNav();
+    });
+
+    sb.auth.onAuthStateChange((event, session)=>{
+      if(session && session.user){
+        currentUser = session.user;
+        onUserLoggedIn(session.user);
+      } else {
+        currentUser = null;
+        renderAuthNav();
+        if(currentView === "saved"){
+          renderGrid();
+          renderHeader();
+        }
+      }
+    });
+  } else {
+    // Modo local / visitante
+    renderAuthNav();
+  }
+}
+
+function onUserLoggedIn(user){
+  renderAuthNav();
+  syncRemoteFavorites();
+  toast("Bem-vindo(a), " + (user.email ? user.email.split("@")[0] : "Usuário"));
+  if(currentView === "saved"){
+    renderHeader();
+    renderGrid();
+  }
+}
+
+async function syncRemoteFavorites(){
+  // Limpa favoritos locais expirados
+  cleanExpiredFavorites();
+  const sb = getSupabase();
+  if(!sb || !currentUser) return;
+
+  try {
+    const { data, error } = await sb
+      .from("licitacoes_salvas")
+      .select("*")
+      .eq("user_id", currentUser.id);
+
+    if(!error && data){
+      // Filtra e exclui automaticamente as vencidas no banco remoto
+      const now = new Date();
+      const validRemote = [];
+      const expiredIds = [];
+
+      data.forEach(item => {
+        const dEnc = item.data_encerramento ? new Date(item.data_encerramento) : null;
+        if(dEnc && !isNaN(dEnc.getTime()) && dEnc < now){
+          expiredIds.push(item.id || item.numero_controle_pncp);
+        } else {
+          validRemote.push({
+            id: item.numero_controle_pncp,
+            titulo: item.titulo,
+            resumo: item.resumo || null,
+            orgao: item.orgao,
+            uf: item.uf,
+            municipio: item.municipio,
+            modalidadeNome: item.modalidade_nome,
+            portalNome: item.portal_nome,
+            dataEncerramento: item.data_encerramento,
+            linkPncp: item.link_pncp,
+            linkSistemaOrigem: item.link_sistema_origem,
+            valorEstimado: item.valor_estimado
+          });
+        }
+      });
+
+      // Exclui as vencidas no banco
+      if(expiredIds.length > 0){
+        sb.from("licitacoes_salvas")
+          .delete()
+          .in("numero_controle_pncp", expiredIds)
+          .catch(()=>{});
+      }
+
+      // Ao acessar em qualquer computador, prioriza as licitações salvas na conta do Supabase
+      const remoteMap = new Map();
+      validRemote.forEach(r => remoteMap.set(r.id, r));
+
+      // Envia para o Supabase itens que foram favoritados offline antes do login
+      for(const f of favorites){
+        if(!remoteMap.has(f.id)){
+          sb.from("licitacoes_salvas").upsert({
+            user_id: currentUser.id,
+            numero_controle_pncp: f.id,
+            titulo: f.titulo,
+            resumo: f.resumo || null,
+            orgao: f.orgao,
+            uf: f.uf,
+            municipio: f.municipio,
+            modalidade_nome: f.modalidadeNome,
+            portal_nome: f.portalNome,
+            data_encerramento: f.dataEncerramento,
+            link_pncp: f.linkPncp,
+            link_sistema_origem: f.linkSistemaOrigem,
+            valor_estimado: f.valorEstimado
+          }, { onConflict: "user_id,numero_controle_pncp" }).catch(()=>{});
+          remoteMap.set(f.id, f);
+        }
+      }
+
+      favorites = Array.from(remoteMap.values());
+      persist("radar:favorites", favorites);
+      updateFavoritesCount();
+      if(currentView === "saved") { renderGrid(); renderHeader(); }
+    }
+  } catch(e){
+    console.warn("Sync error:", e);
+  }
+}
+
+// Exclui automaticamente licitações salvas com data de encerramento passada
+function cleanExpiredFavorites(){
+  const now = new Date();
+  const valid = [];
+  let removed = 0;
+  for(const f of favorites){
+    if(f.dataEncerramento){
+      const dt = new Date(f.dataEncerramento);
+      if(!isNaN(dt.getTime()) && dt < now){
+        removed++;
+        continue; // Excluída automaticamente após encerramento
+      }
+    }
+    valid.push(f);
+  }
+  if(removed > 0){
+    favorites = valid;
+    persist("radar:favorites", favorites);
+    updateFavoritesCount();
+  }
+}
+
+function updateFavoritesCount(){
+  const len = String(favorites.length);
+  const el = $("#tab-saved-count");
+  if(el) el.textContent = len;
+  const favEl = $("#fav-count");
+  if(favEl) favEl.textContent = len;
+  const dockEl = $("#dock-saved-count");
+  if(dockEl) dockEl.textContent = len;
+}
 
 function load(k){ try{ return JSON.parse(localStorage.getItem(k)||"[]"); }catch(e){ return []; } }
 function persist(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
@@ -508,9 +956,9 @@ const favIds = () => new Set(favorites.map(f=>f.id));
 /* LISTAGEM vai "leve" (sem `resumo`): ordenar páginas com todas as colunas
    textuais em consultas abrangentes estoura o statement timeout do PostgREST.
    O `resumo` (seção "Objeto") chega pelo fetchDetail. */
-const COLS_LIST = ["numero_controle_pncp","titulo","orgao_entidade","uf","municipio","modalidade_id","modalidade_nome","modo_disputa","portal_key","portal_nome","status","srp","orcamento_sigiloso","valor_estimado","data_abertura","data_publicacao","data_encerramento","link_pncp","link_sistema_origem","slug","esfera","quantidade_itens"].join(",");
+const COLS_LIST = ["numero_controle_pncp","resumo","titulo","orgao_entidade","uf","municipio","modalidade_id","modalidade_nome","modo_disputa","portal_key","portal_nome","status","srp","orcamento_sigiloso","valor_estimado","data_abertura","data_publicacao","data_encerramento","link_pncp","link_sistema_origem","slug","esfera","quantidade_itens"].join(",");
 const COLS_FULL = "resumo," + COLS_LIST;
-function sbHeaders(extra){ return Object.assign({"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Accept":"application/json"},extra||{}); }
+function sbHeaders(extra){ return Object.assign({"apikey":ATLAS_SB_KEY,"Authorization":"Bearer "+ATLAS_SB_KEY,"Accept":"application/json"},extra||{}); }
 function mapRow(r){ return {
   id:r.numero_controle_pncp||"", titulo:r.titulo||"Sem título", resumo:r.resumo||null, orgao:r.orgao_entidade||null,
   uf:r.uf||null, municipio:r.municipio||null, modalidadeId:typeof r.modalidade_id==="number"?r.modalidade_id:null,
@@ -549,17 +997,21 @@ async function queryAtlas(f,p){
     q.set("or","("+parts.join(",")+")");
   }
   const order = {encerramento_asc:"data_encerramento.asc.nullslast",encerramento_desc:"data_encerramento.desc.nullslast",valor_desc:"valor_estimado.desc.nullslast",publicacao_desc:"data_publicacao.desc.nullslast"}[f.sort]||"data_encerramento.asc.nullslast";
-  q.set("order",order); q.set("limit",String(PAGE_SIZE)); q.set("offset",String((p-1)*PAGE_SIZE));
+  q.set("order",order);
+  const lim = showAll ? 1000 : PAGE_SIZE;
+  const off = showAll ? 0 : (p-1)*PAGE_SIZE;
+  q.set("limit",String(lim)); q.set("offset",String(off));
   const res = await fetch(REST+"/pncp_licitacoes?"+q.toString(),{headers:sbHeaders({"Prefer":"count=exact"}),signal:AbortSignal.timeout(18000)});
   if(!res.ok) throw new Error("Supabase "+res.status);
   const cr = res.headers.get("content-range")||"";
   const total = Number((cr.split("/")[1]||0))||0;
   const rows = await res.json();
-  return {total,page:p,pageSize:PAGE_SIZE,totalPages:Math.max(1,Math.ceil(total/PAGE_SIZE)),items:rows.map(mapRow),source:"atlas"};
+  return {total,page:showAll?1:p,pageSize:showAll?rows.length:PAGE_SIZE,totalPages:showAll?1:Math.max(1,Math.ceil(total/PAGE_SIZE)),items:rows.map(mapRow),source:"atlas"};
 }
 
 async function searchPncp(f,p){
-  const q = new URLSearchParams({tipos_documento:"edital",status:"recebendo_proposta",pagina:String(p),tam_pagina:String(Math.min(PAGE_SIZE,100))});
+  const tam = showAll ? 100 : Math.min(PAGE_SIZE,100);
+  const q = new URLSearchParams({tipos_documento:"edital",status:"recebendo_proposta",pagina:String(showAll?1:p),tam_pagina:String(tam)});
   if(f.q) q.set("q",f.q); if(f.uf) q.set("uf",f.uf.toUpperCase()); if(f.municipio) q.set("municipio_nome",f.municipio);
   if(f.modalidades.length===1) q.set("modalidade_licitacao_id",String(f.modalidades[0]));
   const res = await fetch("https://pncp.gov.br/api/search/?"+q,{headers:{Accept:"application/json"},signal:AbortSignal.timeout(25000)});
@@ -575,7 +1027,7 @@ async function searchPncp(f,p){
     esfera:it.esfera_id||null,quantidadeItens:null
   }));
   const total=Number(d.total||items.length)||0;
-  return {total,page:p,pageSize:PAGE_SIZE,totalPages:Math.max(1,Math.ceil(total/PAGE_SIZE)),items,source:"pncp"};
+  return {total,page:showAll?1:p,pageSize:showAll?items.length:PAGE_SIZE,totalPages:showAll?1:Math.max(1,Math.ceil(total/PAGE_SIZE)),items,source:"pncp"};
 }
 
 async function runSearch(){
@@ -589,14 +1041,195 @@ async function runSearch(){
   loading=false; renderHeader(); renderGrid(); renderPagination();
 }
 
-async function fetchDetail(id){
+async function fetchDetail(id, linkPncp, linkSistemaOrigem){
   const q=new URLSearchParams({select:COLS_FULL,numero_controle_pncp:"eq."+id,limit:"1"});
-  const res=await fetch(REST+"/pncp_licitacoes?"+q,{headers:sbHeaders(),signal:AbortSignal.timeout(15000)});
-  const rows=res.ok?await res.json():[];
+  let rows=[];
+  try{
+    const res=await fetch(REST+"/pncp_licitacoes?"+q,{headers:sbHeaders(),signal:AbortSignal.timeout(15000)});
+    if(res.ok) rows=await res.json();
+  }catch(e){}
+
   const qi=new URLSearchParams({select:"numero_item,titulo,descricao,quantidade,unidade,valor_unitario,valor_total",numero_controle_pncp:"eq."+id,order:"numero_item.asc.nullslast",limit:"500"});
-  const ri=await fetch(REST+"/pncp_licitacao_itens?"+qi,{headers:sbHeaders(),signal:AbortSignal.timeout(15000)});
-  const items=ri.ok?await ri.json():[];
-  return {licitacao:rows.length?mapRow(rows[0]):null,itens:items};
+  let items=[];
+  try{
+    const ri=await fetch(REST+"/pncp_licitacao_itens?"+qi,{headers:sbHeaders(),signal:AbortSignal.timeout(15000)});
+    if(ri.ok) items=await ri.json();
+  }catch(e){}
+
+  let documentos=[];
+  try{
+    const qd=new URLSearchParams({numero_controle_pncp:"eq."+id,limit:"100"});
+    const rd=await fetch(REST+"/pncp_licitacao_documentos?"+qd,{headers:sbHeaders(),signal:AbortSignal.timeout(10000)});
+    if(rd.ok) {
+      const drows=await rd.json();
+      documentos=drows.map(d=>({
+        titulo:d.titulo||d.nome||"Documento",
+        tipoNome:d.tipo_documento_nome||d.tipo_nome||null,
+        url:d.url||d.uri||null,
+        dataPublicacao:d.data_publicacao_pncp||d.data_publicacao||null
+      }));
+    }
+  }catch(e){}
+
+  const m=(id||"").match(/^(\d{14})-[0-9]+-(\d+)\/(\d{4})/);
+  let cnpj="", ano="", seq="";
+  if(m){ cnpj=m[1]; seq=String(parseInt(m[2],10)); ano=m[3]; }
+  else if(linkPncp){
+    const ml=linkPncp.match(/(?:editais|compras)\/(\d{14})\/(\d{4})\/(\d+)/);
+    if(ml){ cnpj=ml[1]; ano=ml[2]; seq=String(parseInt(ml[3],10)); }
+  }
+
+  let unidadeCompradoraApi = null;
+  let uasgApi = null;
+  let numeroCompraApi = null;
+  let anoCompraApi = null;
+  let numeroProcessoApi = null;
+  if(cnpj && ano && seq){
+    try{
+      const rComp = await fetch("https://pncp.gov.br/api/pncp/v1/orgaos/"+cnpj+"/compras/"+ano+"/"+seq, {headers:{Accept:"application/json"},signal:AbortSignal.timeout(6000)});
+      if(rComp.ok){
+        const dComp = await rComp.json();
+        const u = dComp.unidadeOrgao || dComp.unidadeSubrogada || {};
+        const uCod = u.codigoUnidade || dComp.codigoUnidadeCompradora || "";
+        const uNom = u.nomeUnidade || dComp.nomeUnidadeCompradora || "";
+        if(uCod) uasgApi = uCod;
+        if(uCod && uNom){
+          unidadeCompradoraApi = uCod + " - " + uNom;
+        } else if(uNom){
+          unidadeCompradoraApi = uNom;
+        } else if(uCod){
+          unidadeCompradoraApi = uCod;
+        }
+        if(dComp.numeroCompra) numeroCompraApi = dComp.numeroCompra;
+        if(dComp.anoCompra) anoCompraApi = dComp.anoCompra;
+        if(dComp.numeroProcesso || dComp.processo) numeroProcessoApi = dComp.numeroProcesso || dComp.processo;
+      }
+    }catch(e){}
+
+    if(!items.length){
+      try{
+        const rIt=await fetch("https://pncp.gov.br/api/pncp/v1/orgaos/"+cnpj+"/compras/"+ano+"/"+seq+"/itens?pagina=1&tamanhoPagina=100",{headers:{Accept:"application/json"},signal:AbortSignal.timeout(6000)});
+        if(rIt.ok){
+          const dIt=await rIt.json();
+          const list=Array.isArray(dIt)?dIt:(Array.isArray(dIt&&dIt.data)?dIt.data:[]);
+          items=list.map(it=>({
+            numero_item:it.numeroItem,
+            titulo:it.descricaoItem||it.descricao||it.especificacao||null,
+            descricao:it.descricaoItem||it.descricao||it.especificacao||null,
+            especificacao:it.especificacao||it.descricaoItem||null,
+            quantidade:it.quantidade,
+            unidade:it.unidadeMedida,
+            valor_unitario:it.valorUnitarioEstimado,
+            valor_total:it.valorTotal
+          }));
+        }
+      }catch(e){}
+    }
+    if(!documentos.length){
+      try{
+        const rDoc=await fetch("https://pncp.gov.br/api/pncp/v1/orgaos/"+cnpj+"/compras/"+ano+"/"+seq+"/arquivos?pagina=1&tamanhoPagina=50",{headers:{Accept:"application/json"},signal:AbortSignal.timeout(6000)});
+        if(rDoc.ok){
+          const dDoc=await rDoc.json();
+          const list=Array.isArray(dDoc)?dDoc:(Array.isArray(dDoc&&dDoc.data)?dDoc.data:[]);
+          documentos=list.map(doc=>({
+            titulo:doc.titulo||doc.tipoDocumentoNome||"Documento",
+            tipoNome:doc.tipoDocumentoNome||null,
+            url:doc.url||("https://pncp.gov.br/api/pncp/v1/orgaos/"+cnpj+"/compras/"+ano+"/"+seq+"/arquivos/"+doc.sequencialDocumento),
+            dataPublicacao:doc.dataPublicacaoPncp||null
+          }));
+        }
+      }catch(e){}
+    }
+  }
+
+  const licitacao=rows.length?mapRow(rows[0]):null;
+  if(!items.length && (licitacao || linkPncp || linkSistemaOrigem)){
+    const mainDesc = (licitacao && (licitacao.resumo || licitacao.titulo)) || "";
+    if(mainDesc){
+      items=[{
+        numero_item:1,
+        titulo:mainDesc,
+        descricao:mainDesc,
+        quantidade:(licitacao && licitacao.quantidadeItens) || 1,
+        unidade:"UN",
+        valor_unitario:licitacao ? licitacao.valorEstimado : null,
+        valor_total:licitacao ? licitacao.valorEstimado : null
+      }];
+    }
+  }
+
+  if(!documentos.length){
+    if(linkPncp || (licitacao && licitacao.linkPncp)){
+      const lp=linkPncp || licitacao.linkPncp;
+      documentos.push({
+        titulo:"Edital e Anexos (Página Oficial PNCP)",
+        tipoNome:"Edital / Anexos",
+        url:lp,
+        dataPublicacao:licitacao?licitacao.dataPublicacao:null
+      });
+    }
+    if(linkSistemaOrigem || (licitacao && licitacao.linkSistemaOrigem)){
+      const lso=linkSistemaOrigem || licitacao.linkSistemaOrigem;
+      documentos.push({
+        titulo:"Acesso no "+((licitacao&&licitacao.portalNome)|| "Sistema de Origem"),
+        tipoNome:"Portal de Disputa",
+        url:lso,
+        dataPublicacao:licitacao?licitacao.dataPublicacao:null
+      });
+    }
+  }
+
+  // Fallback: se uasgApi ou unidadeCompradoraApi ainda não foram obtidos,
+  // inspeciona URLs e títulos de documentos retornados
+  if(!uasgApi && documentos.length){
+    for(const doc of documentos){
+      const docStr = (doc.url || "") + " " + (doc.titulo || "");
+      const mu = docStr.match(/(?:uasg|co_uasg|codigouasg)[=/](\d{5,6})/i) ||
+                 docStr.match(/\buasg[\s:.-]*(\d{5,6})\b/i);
+      if(mu){
+        uasgApi = mu[1];
+        break;
+      }
+    }
+  }
+
+  // Fallback na API de busca do PNCP caso a API compras não tenha respondido
+  if(!unidadeCompradoraApi && id){
+    try{
+      const rSearch = await fetch("https://pncp.gov.br/api/search/?q="+encodeURIComponent(id)+"&tipos_documento=edital&tam_pagina=1", {headers:{Accept:"application/json"},signal:AbortSignal.timeout(5000)});
+      if(rSearch.ok){
+        const dS = await rSearch.json();
+        if(dS.items && dS.items.length){
+          const sItem = dS.items[0];
+          const uCod = sItem.unidade_codigo || sItem.codigo_unidade || "";
+          const uNom = sItem.unidade_nome || sItem.nome_unidade || "";
+          if(uCod && !uasgApi) uasgApi = uCod;
+          if(uCod && uNom){
+            unidadeCompradoraApi = uCod + " - " + uNom;
+          } else if(uNom){
+            unidadeCompradoraApi = (uasgApi ? uasgApi + " - " : "") + uNom;
+          }
+          if(!numeroCompraApi && (sItem.numero_aviso || sItem.numero_compra || sItem.numeroCompra)) {
+            numeroCompraApi = sItem.numero_aviso || sItem.numero_compra || sItem.numeroCompra;
+          }
+          if(!numeroProcessoApi && (sItem.processo || sItem.numero_processo || sItem.numeroProcesso)) {
+            numeroProcessoApi = sItem.processo || sItem.numero_processo || sItem.numeroProcesso;
+          }
+        }
+      }
+    }catch(e){}
+  }
+
+  return {
+    licitacao,
+    itens: items,
+    documentos,
+    unidadeCompradora: unidadeCompradoraApi,
+    uasg: uasgApi,
+    numeroCompra: numeroCompraApi,
+    anoCompra: anoCompraApi,
+    numeroProcesso: numeroProcessoApi
+  };
 }
 
 async function fetchFacets(){
@@ -634,8 +1267,7 @@ function activeCount(){ return (F.q?1:0)+(F.uf?1:0)+(F.municipio?1:0)+F.modalida
 function renderDock(){
   const dock=$("#dock");
   dock.innerHTML=
-  '<div class="search-row">'+I.search+'<input id="f-q" type="text" placeholder="Buscar por objeto, órgão ou palavra-chave… ex.: uniformes, ambulância, prefeitura" value="'+esc(F.q)+'"></div>'+
-  '<div class="grid2">'+
+  '<div class="grid2" style="margin-top:0">'+
     '<div><p class="flabel">'+I.pin+'UF</p><select class="field" id="f-uf"><option value="">Todo o Brasil</option>'+UFS.map(u=>'<option value="'+u+'"'+(F.uf===u?" selected":"")+'>'+u+'</option>').join("")+'</select></div>'+
     '<div><p class="flabel">'+I.building+'Município</p><div class="ac" id="ac-mun"><input class="field" id="f-mun" placeholder="'+(F.uf?"Município em "+F.uf+"…":"Digite o município…")+'" value="'+esc(F.municipio)+'" autocomplete="off"><div class="glass ac-panel" id="ac-panel"></div></div></div>'+
     '<div><p class="flabel">'+I.layers+'Modalidade</p><div class="ms" id="ms-mod"></div></div>'+
@@ -646,43 +1278,104 @@ function renderDock(){
       '<div class="date-row"><input class="field" type="date" id="f-de" value="'+F.encerramentoDe+'" aria-label="Encerramento a partir de"><span class="sep">até</span><input class="field" type="date" id="f-ate" value="'+F.encerramentoAte+'" aria-label="Encerramento até"></div>'+
       '<div class="presets" id="presets">'+PRESETS.map((p,i)=>'<button type="button" class="preset" data-i="'+i+'">'+p.label+'</button>').join("")+'</div></div>'+
     '<div><p class="flabel">'+I.dollar+'Valor estimado (R$)</p><div class="date-row"><input class="field" id="f-vmin" inputmode="numeric" placeholder="Mínimo" value="'+esc(F.valorMin)+'"><span class="sep">–</span><input class="field" id="f-vmax" inputmode="numeric" placeholder="Máximo" value="'+esc(F.valorMax)+'"></div></div>'+
-    '<div><p class="flabel">'+I.sort+'Ordenar por</p><select class="field" id="f-sort">'+
-      '<option value="encerramento_asc"'+(F.sort==="encerramento_asc"?" selected":"")+'>Encerramento mais próximo</option>'+
-      '<option value="encerramento_desc"'+(F.sort==="encerramento_desc"?" selected":"")+'>Encerramento mais distante</option>'+
-      '<option value="publicacao_desc"'+(F.sort==="publicacao_desc"?" selected":"")+'>Publicação mais recente</option>'+
-      '<option value="valor_desc"'+(F.sort==="valor_desc"?" selected":"")+'>Maior valor estimado</option></select></div>'+
-    '<div class="btn-row"><button type="button" class="btn btn-ghost" id="btn-clear">'+I.eraser+'Limpar'+(activeCount()?" ("+activeCount()+")":"")+'</button>'+
-    '<button type="button" class="btn btn-save" id="btn-save" title="Salvar esta combinação de filtros">'+I.bookmark+'Salvar</button></div>'+
+    '<div class="btn-row" style="flex-wrap:nowrap">'+
+      '<button type="button" class="btn btn-ghost" id="btn-filter-saved" style="background:rgba(163,230,53,.1);color:#d9f99d;border-color:rgba(163,230,53,.3)" title="Alternar para licitações salvas">'+I.heart+'Salvas ('+favorites.length+')</button>'+
+      '<button type="button" class="btn btn-ghost" id="btn-clear" title="Limpar filtros">'+I.eraser+'Limpar'+(activeCount()?" ("+activeCount()+")":"")+'</button>'+
+      '<button type="button" class="btn btn-save" id="btn-save" title="Salvar esta combinação de filtros">'+I.bookmark+'Salvar</button>'+
+    '</div>'+
   '</div>';
 
   attachMultiSelect($("#ms-mod"),{placeholder:"Todas as modalidades",options:MODALIDADES.map(m=>({value:String(m.id),label:m.nome})),selected:F.modalidades.map(String),onChange:next=>setF({modalidades:next.map(Number)})});
   attachMultiSelect($("#ms-port"),{placeholder:"Todos os portais",options:PORTAIS.map(p=>({value:p.key,label:p.nome,color:p.cor})),selected:F.portais,onChange:next=>setF({portais:next})});
 
   let deb=null;
-  $("#f-q").addEventListener("input",e=>{ clearTimeout(deb); const v=e.target.value; deb=setTimeout(()=>setF({q:v}),450); });
   $("#f-uf").addEventListener("change",e=>{ const mi=$("#f-mun"); if(mi){ mi.value=""; mi.placeholder=e.target.value?("Município em "+e.target.value+"…"):"Digite o município…"; } setF({uf:e.target.value,municipio:""}); });
   $("#f-de").addEventListener("change",e=>setF({encerramentoDe:e.target.value}));
   $("#f-ate").addEventListener("change",e=>setF({encerramentoAte:e.target.value}));
   $("#f-vmin").addEventListener("input",e=>{ clearTimeout(deb); const v=e.target.value.replace(/[^\d]/g,""); deb=setTimeout(()=>setF({valorMin:v}),450); });
   $("#f-vmax").addEventListener("input",e=>{ clearTimeout(deb); const v=e.target.value.replace(/[^\d]/g,""); deb=setTimeout(()=>setF({valorMax:v}),450); });
-  $("#f-sort").addEventListener("change",e=>setF({sort:e.target.value}));
-  $("#btn-clear").addEventListener("click",()=>{ F={...EMPTY}; page=1; renderDock(); runSearch(); renderSavedBar(); });
+  $("#btn-filter-saved") && $("#btn-filter-saved").addEventListener("click",()=>{
+    switchView(currentView === "saved" ? "all" : "saved");
+  });
+  $("#btn-clear").addEventListener("click",()=>{ F={...EMPTY}; page=1; showAll=false; renderDock(); renderResultsToolbar(); runSearch(); renderSavedBar(); });
   $("#btn-save").addEventListener("click",openSaveModal);
   $("#presets").addEventListener("click",e=>{
     const b=e.target.closest(".preset"); if(!b) return;
     const dias=PRESETS[Number(b.dataset.i)].dias;
-    const hoje=new Date(); const fim=new Date(); fim.setDate(fim.getDate()+dias); fim.setHours(23,59,59,0);
-    F={...F,encerramentoDe:toISOin(hoje),encerramentoAte:toISOin(fim)}; page=1; renderDock(); runSearch();
+    if(dias===1){
+      const amanha=new Date(); amanha.setDate(amanha.getDate()+1);
+      const str=toISOin(amanha);
+      F={...F,encerramentoDe:str,encerramentoAte:str};
+    } else {
+      const hoje=new Date(); const fim=new Date(); fim.setDate(fim.getDate()+dias); fim.setHours(23,59,59,0);
+      F={...F,encerramentoDe:toISOin(hoje),encerramentoAte:toISOin(fim)};
+    }
+    page=1; showAll=false; renderDock(); renderResultsToolbar(); runSearch();
   });
   markPreset();
   attachAutocomplete();
+}
+
+function renderResultsToolbar(){
+  const tb=$("#results-toolbar"); if(!tb) return;
+  tb.innerHTML=
+    '<div class="search-row">'+I.search+'<input id="f-q" type="text" placeholder="Buscar por objeto, Itens, órgão ou palavra-chave… ex.: uniformes, ambulância, prefeitura" value="'+esc(F.q)+'"></div>'+
+    '<div class="sort-wrap">'+
+      '<p class="flabel" style="margin-bottom:0;white-space:nowrap">'+I.sort+'Ordenar por</p>'+
+      '<select class="field" id="f-sort" style="height:44px">'+
+        '<option value="encerramento_asc"'+(F.sort==="encerramento_asc"?" selected":"")+'>Encerramento mais próximo</option>'+
+        '<option value="encerramento_desc"'+(F.sort==="encerramento_desc"?" selected":"")+'>Encerramento mais distante</option>'+
+        '<option value="publicacao_desc"'+(F.sort==="publicacao_desc"?" selected":"")+'>Publicação mais recente</option>'+
+        '<option value="valor_desc"'+(F.sort==="valor_desc"?" selected":"")+'>Maior valor estimado</option>'+
+      '</select>'+
+    '</div>'+
+    '<div class="sort-wrap">'+
+      '<p class="flabel" style="margin-bottom:0;white-space:nowrap">'+I.layers+'Exibir</p>'+
+      '<select class="field" id="f-pagesize" style="height:44px">'+
+        '<option value="10"'+((!showAll && PAGE_SIZE===10)?" selected":"")+'>10 licitações</option>'+
+        '<option value="50"'+((!showAll && PAGE_SIZE===50)?" selected":"")+'>50 licitações</option>'+
+        '<option value="100"'+((!showAll && PAGE_SIZE===100)?" selected":"")+'>100 licitações</option>'+
+        '<option value="all"'+(showAll?" selected":"")+'>Todas as licitações</option>'+
+      '</select>'+
+    '</div>'+
+    '<button type="button" class="btn-all-res" id="btn-all">'+I.layers+'Mostrar todos os resultados</button>';
+
+  let deb=null;
+  const fq=$("#f-q");
+  if(fq) fq.addEventListener("input",e=>{ clearTimeout(deb); const v=e.target.value; deb=setTimeout(()=>setF({q:v}),450); });
+  const fs=$("#f-sort");
+  if(fs) fs.addEventListener("change",e=>setF({sort:e.target.value}));
+  const fps=$("#f-pagesize");
+  if(fps) fps.addEventListener("change",e=>{
+    const v = e.target.value;
+    if(v === "all"){
+      showAll = true;
+      PAGE_SIZE = 1000;
+      toast("Exibindo todas as licitações em uma só página");
+    } else {
+      showAll = false;
+      PAGE_SIZE = Number(v);
+      toast("Exibindo " + v + " licitações por página");
+    }
+    page = 1;
+    renderResultsToolbar();
+    runSearch();
+  });
+  const btnAll=$("#btn-all");
+  if(btnAll) btnAll.addEventListener("click",()=>{
+    page=1; showAll=true; PAGE_SIZE=1000; renderResultsToolbar(); runSearch(); renderSavedBar(); toast("Exibindo todos os resultados em uma só página");
+  });
 }
 
 function markPreset(){
   document.querySelectorAll(".preset").forEach((b,i)=>{
     const p=PRESETS[i];
     const target=toISOin(new Date(Date.now()+p.dias*86400000));
-    b.classList.toggle("on", F.encerramentoAte===target);
+    if(p.dias===1){
+      b.classList.toggle("on", F.encerramentoDe===target && F.encerramentoAte===target);
+    } else {
+      b.classList.toggle("on", F.encerramentoAte===target);
+    }
   });
 }
 
@@ -691,7 +1384,7 @@ function attachMultiSelect(root,{placeholder,options,selected:sel0,onChange}){
   let selected=sel0.slice(), open=false, query="";
   function onDoc(ev){ if(open && !root.contains(ev.target)){ open=false; render(); } }
   document.addEventListener("mousedown",onDoc);
-  function change(next){ selected=next; onChange(next); render(); }
+  function change(next){ selected=next; showAll=false; onChange(next); render(); }
   function render(){
     root.classList.toggle("open",open);
     const btnLabel=selected.length? selected.length+" selecionada"+(selected.length>1?"s":"") : placeholder;
@@ -748,25 +1441,155 @@ function attachAutocomplete(){
 }
 
 /* ---------- resultados ---------- */
-function setF(patch){ F={...F,...patch}; page=1; runSearch(); const ac=$("#btn-clear"); if(ac) ac.innerHTML=I.eraser+'Limpar'+(activeCount()?" ("+activeCount()+")":""); markPreset(); }
+function setF(patch){ F={...F,...patch}; page=1; showAll=false; runSearch(); const ac=$("#btn-clear"); if(ac) ac.innerHTML=I.eraser+'Limpar'+(activeCount()?" ("+activeCount()+")":""); markPreset(); }
 
 function renderHeader(){
   const h=$("#result-header"); if(!h) return;
+
+  if(currentView === "saved"){
+    cleanExpiredFavorites();
+    const count = favorites.length;
+    let title = '<span class="n">'+count+'</span> licitaç'+(count===1?"ão salva":"ões salvas");
+    let src = '<span class="src-badge" style="border-color:rgba(163,230,53,.3);color:#d9f99d">'+I.heart+(currentUser ? 'Sincronizado via Nuvem' : 'Armazenamento Local')+ '</span>';
+    h.innerHTML='<div style="display:flex;align-items:center;flex-wrap:wrap">'+ '<h2>'+title+'</h2>'+src+'</div>'+
+      '<div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">'+
+        '<button type="button" class="btn-clear-saved" id="btn-clear-all-saved" '+(count===0?"disabled":"")+'>'+I.trash+'Limpar todas as salvas</button>'+
+        '<button type="button" class="csv-btn" id="btn-csv" '+(count===0?"disabled":"")+'>'+I.download+'Exportar Salvas (CSV)</button>'+
+      '</div>';
+    const b=$("#btn-csv"); if(b) b.addEventListener("click",exportCsv);
+    const bClear=$("#btn-clear-all-saved"); if(bClear) bClear.addEventListener("click",clearAllSaved);
+    return;
+  }
+
   let title="Buscando licitações…";
   let src="";
-  if(result){ title='<span class="n">'+result.total.toLocaleString("pt-BR")+'</span> licitaç'+(result.total===1?"ão aberta":"ões abertas"); src='<span class="src-badge">'+I.db+(result.source==="atlas"?"Base Atlas · PNCP":"API PNCP (direto)")+'</span>'; }
+  if(result){
+    const tot = result.total || 0;
+    let countTxt = "";
+    if(showAll){
+      countTxt = '<span class="n">'+tot.toLocaleString("pt-BR")+'</span> licitaç'+(tot===1?"ão encontrada":"ões encontradas");
+    } else {
+      countTxt = '<span class="n">'+tot.toLocaleString("pt-BR")+'</span> licitaç'+(tot===1?"ão aberta":"ões abertas");
+    }
+    title = countTxt;
+    src = '<span class="src-badge">'+I.db+(result.source==="atlas"?"Base Atlas · PNCP":"API PNCP (direto)")+'</span>';
+  }
   h.innerHTML='<div style="display:flex;align-items:center;flex-wrap:wrap">'+ '<h2>'+title+'</h2>'+src+'</div>'+
     '<button type="button" class="csv-btn" id="btn-csv" '+((!result||!result.items.length||loading)?"disabled":"")+'>'+I.download+'Exportar página (CSV)</button>';
   const b=$("#btn-csv"); if(b) b.addEventListener("click",exportCsv);
 }
 
+
+function detectPortalInfo(l){
+  let key = l.portalKey || null;
+  let nome = l.portalNome || null;
+
+  const url = (l.linkSistemaOrigem || l.linkPncp || "").toLowerCase();
+  const txt = ((l.titulo || "") + " " + (l.resumo || "") + " " + (l.orgao || "")).toLowerCase();
+
+  if(!key || key === "pncp" || !nome || nome === "PNCP"){
+    if(url.includes("comprasnet.gov.br") || url.includes("gov.br/compras") || url.includes("compras.dados.gov.br") || txt.includes("comprasnet") || txt.includes("compras.gov.br")){
+      key = "comprasnet"; nome = "ComprasNet";
+    } else if(url.includes("bll.org.br") || url.includes("bllcompras") || txt.includes("bll compras") || txt.includes("bll ")){
+      key = "bll-compras"; nome = "BLL Compras";
+    } else if(url.includes("bnc.org.br") || txt.includes("bnc compras") || txt.includes("bolsa nacional de compras") || txt.includes("bnc")){
+      key = "bnc"; nome = "BNC";
+    } else if(url.includes("licitanet.com.br") || txt.includes("licitanet")){
+      key = "licitanet"; nome = "Licitanet";
+    } else if(url.includes("licitacoes-e.com.br") || txt.includes("licitações-e") || txt.includes("licitacoes-e") || txt.includes("banco do brasil")){
+      key = "licitacoes-e"; nome = "Licitações-e (BB)";
+    } else if(url.includes("bec.sp.gov.br") || txt.includes("bec sp") || txt.includes("bec/sp")){
+      key = "bec-sp"; nome = "BEC-SP";
+    } else if(url.includes("portaldecompraspublicas.com.br") || txt.includes("portal de compras publicas")){
+      key = "portal-compras-publicas"; nome = "Portal de Compras Públicas";
+    } else if(url.includes("petronect") || txt.includes("petronect")){
+      key = "petronect"; nome = "Petronect";
+    } else if(url.includes("compras.mg.gov.br") || txt.includes("compras mg") || txt.includes("compras minas gerais")){
+      key = "compras-minas-gerais"; nome = "Compras MG";
+    } else if(url.includes("peintegrado") || txt.includes("pe integrado")){
+      key = "pe-integrado"; nome = "PE Integrado";
+    } else if(url.includes("comprasnet.ba.gov.br") || txt.includes("compras bahia")){
+      key = "compras-bahia"; nome = "Compras Bahia";
+    } else if(url.includes("compras.rs.gov.br") || txt.includes("compras rs")){
+      key = "compras-rs"; nome = "Compras RS";
+    } else if(url.includes("compras.rj.gov.br") || txt.includes("compras rj")){
+      key = "compras-rj"; nome = "Compras RJ";
+    } else if(url.includes("recife") && txt.includes("compras")){
+      key = "compras-recife"; nome = "Compras Recife";
+    } else if(url.includes("banrisul")){
+      key = "banrisul"; nome = "Banrisul";
+    } else if(url.includes("siga.es.gov.br") || txt.includes("siga es")){
+      key = "siga-es"; nome = "SIGA-ES";
+    } else if(url.includes("e-compras") || txt.includes("e-compras")){
+      key = "e-compras"; nome = "E-Compras";
+    }
+  }
+
+  if(!nome) nome = "PNCP";
+  return { key: key || "pncp", nome };
+}
+
 function portalBadge(l){
-  const cor=(l.portalKey&&PORTAL_COR[l.portalKey])||"#94a3b8";
-  return '<span class="badge" style="border-color:'+cor+'55;color:'+cor+';background:'+cor+'14"><span class="d" style="background:'+cor+'"></span>'+esc(l.portalNome||"PNCP")+'</span>';
+  const p = detectPortalInfo(l);
+  const cor = (p.key && PORTAL_COR[p.key]) || "#a3e635";
+  return '<span class="badge" style="border-color:'+cor+'55;color:'+cor+';background:'+cor+'14"><span class="d" style="background:'+cor+'"></span>'+esc(p.nome)+'</span>';
 }
 
 function renderGrid(){
   const g=$("#grid"); if(!g) return;
+
+  if(currentView === "saved"){
+    cleanExpiredFavorites();
+    const favs=favIds();
+    let displayList = favorites.slice();
+    if(F.q && F.q.trim()){
+      const t = F.q.toLowerCase();
+      displayList = displayList.filter(l => (l.titulo && l.titulo.toLowerCase().includes(t)) || (l.resumo && l.resumo.toLowerCase().includes(t)) || (l.orgao && l.orgao.toLowerCase().includes(t)));
+    }
+    if(!displayList.length){
+      g.innerHTML='<div class="state empty" style="grid-column:1/-1">'+I.heart.replace('width="16" height="16"','width="44" height="44"')+
+        '<p class="t" style="margin-top:1rem;font-size:17px;font-weight:700">Nenhuma licitação salva encontrada</p>'+
+        '<p class="s" style="max-width:440px;margin:0 auto">Salve licitações clicando no ícone de coração nos cards. Elas ficam organizadas aqui e são <strong>automaticamente excluídas assim que expirar o prazo de encerramento da proposta</strong>.</p>'+
+        '<button type="button" class="auth-btn auth-btn-primary" style="margin:1.5rem auto 0;display:inline-flex" onclick="switchView(\'all\')">Explorar Licitações Abertas</button>'+
+        '</div>';
+      return;
+    }
+    g.classList.remove("dim");
+    g.innerHTML=displayList.map((l,i)=>{
+      const dl=deadline(l.dataEncerramento);
+      const isFav=favs.has(l.id);
+      return '<article class="card" data-id="'+esc(l.id)+'" style="animation-delay:'+Math.min(i*30,300)+'ms">'+
+        '<div class="card-top"><div class="badges">'+portalBadge(l)+(l.modalidadeNome?'<span class="badge badge-mod">'+esc(l.modalidadeNome)+'</span>':"")+'</div>'+
+        '<button type="button" class="heart on" data-fav="'+esc(l.id)+'" aria-label="Remover das salvas" title="Remover">'+I.heart+'</button></div>'+
+        '<h3>'+esc(l.titulo)+'</h3>'+
+        (l.resumo ? '<div class="card-objeto"><p class="obj-lbl">'+I.file+'Descrição Completa do Objeto</p><p class="obj-content">'+esc(l.resumo)+'</p></div>' : '<div class="card-objeto"><p class="obj-lbl">'+I.file+'Descrição do Objeto</p><p class="obj-content">'+esc(l.titulo)+'</p></div>')+
+        '<div class="card-highlight-row" style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center">'+
+          '<span class="badge" style="border-color:rgba(163,230,53,.35);color:#d9f99d;background:rgba(163,230,53,.1);font-size:12px;padding:.3rem .7rem">'+I.file+' Nº do Edital: <strong style="margin-left:4px;color:#fff">'+(esc(extractNumeroEdital(l)) || "—")+'</strong></span>'+
+          '<span class="badge" style="border-color:rgba(34,211,238,.35);color:#67e8f9;background:rgba(34,211,238,.1);font-size:12px;padding:.3rem .7rem">'+I.receipt+' UASG: <strong style="margin-left:4px;color:#fff">'+(esc(extractUasg(l, null)) || "—")+'</strong></span>'+
+        '</div>'+
+        '<div class="meta" style="margin-top:.75rem"><p>'+I.landmark+'<span class="clamp2">'+esc(l.orgao||"Órgão não informado")+'</span></p>'+
+        '<p>'+I.pin+'<span>'+esc(l.municipio||"—")+(l.uf?" · "+esc(l.uf):"")+'</span></p></div>'+
+        '<div class="card-foot"><div><p class="lbl">'+I.cal+'Encerramento (exclusão automática após)</p><p class="val">'+fmtDate(l.dataEncerramento)+'</p></div>'+
+        '<div style="text-align:right"><p class="lbl" style="justify-content:flex-end">Valor estimado</p><p class="val money">'+(l.orcamentoSigiloso?"Sigiloso":fmtBRLc(l.valorEstimado))+'</p></div></div>'+
+        '<div class="ddl tone-'+dl.tone+'">'+(dl.tone==="critical"?'<span class="pd"></span>':"")+dl.label+'</div>'+
+      '</article>';
+    }).join("");
+
+    g.querySelectorAll(".card").forEach(c=>{
+      c.addEventListener("click",e=>{
+        if(e.target.closest(".heart")) return;
+        const l=displayList.find(x=>x.id===c.dataset.id); if(l) openDrawer(l);
+      });
+    });
+    g.querySelectorAll(".heart").forEach(b=>{
+      b.addEventListener("click",e=>{
+        e.stopPropagation();
+        const l=displayList.find(x=>x.id===b.dataset.fav); if(l) toggleFavorite(l);
+      });
+    });
+    return;
+  }
+
   if(errorMsg){ g.innerHTML='<div class="state err" style="grid-column:1/-1">'+I.alert+'<p class="s" style="margin-top:.75rem">'+esc(errorMsg)+'</p></div>'; return; }
   if(loading&&!result){
     g.innerHTML=Array.from({length:9}).map(()=>'<div class="sk"><div style="height:12px;width:8rem"></div><div style="height:14px;width:100%;margin-top:.75rem"></div><div style="height:14px;width:75%;margin-top:.5rem"></div><div style="height:12px;width:50%;margin-top:1rem"></div><div style="display:flex;justify-content:space-between;margin-top:1.25rem"><div style="height:24px;width:6rem;border-radius:999px"></div><div style="height:24px;width:5rem;border-radius:999px"></div></div></div>').join("");
@@ -786,7 +1609,12 @@ function renderGrid(){
       '<div class="card-top"><div class="badges">'+portalBadge(l)+(l.modalidadeNome?'<span class="badge badge-mod">'+esc(l.modalidadeNome)+'</span>':"")+'</div>'+
       '<button type="button" class="heart'+(isFav?" on":"")+'" data-fav="'+esc(l.id)+'" aria-label="Favoritar">'+I.heart+'</button></div>'+
       '<h3>'+esc(l.titulo)+'</h3>'+
-      '<div class="meta"><p>'+I.landmark+'<span class="clamp2">'+esc(l.orgao||"Órgão não informado")+'</span></p>'+
+      (l.resumo ? '<div class="card-objeto"><p class="obj-lbl">'+I.file+'Descrição Completa do Objeto</p><p class="obj-content">'+esc(l.resumo)+'</p></div>' : '<div class="card-objeto"><p class="obj-lbl">'+I.file+'Descrição do Objeto</p><p class="obj-content">'+esc(l.titulo)+'</p></div>')+
+      '<div class="card-highlight-row" style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center">'+
+        '<span class="badge" style="border-color:rgba(163,230,53,.35);color:#d9f99d;background:rgba(163,230,53,.1);font-size:12px;padding:.3rem .7rem">'+I.file+' Nº do Edital: <strong style="margin-left:4px;color:#fff">'+(esc(extractNumeroEdital(l)) || "—")+'</strong></span>'+
+        '<span class="badge" style="border-color:rgba(34,211,238,.35);color:#67e8f9;background:rgba(34,211,238,.1);font-size:12px;padding:.3rem .7rem">'+I.receipt+' UASG: <strong style="margin-left:4px;color:#fff">'+(esc(extractUasg(l, null)) || "—")+'</strong></span>'+
+      '</div>'+
+      '<div class="meta" style="margin-top:.75rem"><p>'+I.landmark+'<span class="clamp2">'+esc(l.orgao||"Órgão não informado")+'</span></p>'+
       '<p>'+I.pin+'<span>'+esc(l.municipio||"—")+(l.uf?" · "+esc(l.uf):"")+'</span></p></div>'+
       '<div class="card-foot"><div><p class="lbl">'+I.cal+'Encerramento</p><p class="val">'+fmtDate(l.dataEncerramento)+'</p></div>'+
       '<div style="text-align:right"><p class="lbl" style="justify-content:flex-end">Valor estimado</p><p class="val money">'+(l.orcamentoSigiloso?"Sigiloso":fmtBRLc(l.valorEstimado))+'</p></div></div>'+
@@ -815,7 +1643,7 @@ function pageWindow(p,t){
 
 function renderPagination(){
   const nav=$("#pgn"); if(!nav) return;
-  if(!result||result.totalPages<=1){ nav.innerHTML=""; return; }
+  if(!result||showAll||result.totalPages<=1){ nav.innerHTML=showAll?'<p class="ms-empty" style="text-align:center;width:100%;font-size:12px;color:var(--fog)">Exibindo todos os resultados em uma única página.</p>':""; return; }
   const p=result.page,t=result.totalPages;
   nav.innerHTML='<button type="button" data-p="'+(p-1)+'" '+(p<=1?"disabled":"")+' aria-label="Página anterior">'+I.chevL+'</button>'+
     pageWindow(p,t).map(x=>x==="…"?'<span class="dots">…</span>':'<button type="button" data-p="'+x+'" class="'+(x===p?"cur":"")+'">'+x+'</button>').join("")+
@@ -840,12 +1668,16 @@ function exportCsv(){
 
 /* ---------- drawer ---------- */
 let drawerEl=null;
+let drawerCloseTimer=null;
 function openDrawer(l){
-  closeDrawer();
+  if(drawerCloseTimer){
+    clearTimeout(drawerCloseTimer);
+    drawerCloseTimer=null;
+  }
+  const root=$("#drawer-root");
   const dl=deadline(l.dataEncerramento);
   const cor=(l.portalKey&&PORTAL_COR[l.portalKey])||"#94a3b8";
   const isFav=favIds().has(l.id);
-  const root=$("#drawer-root");
   root.innerHTML=
   '<div class="overlay" id="ovl"></div>'+
   '<aside class="drawer" id="drw" role="dialog" aria-modal="true">'+
@@ -858,7 +1690,10 @@ function openDrawer(l){
       '<h2>'+esc(l.titulo)+'</h2><p class="pid">'+esc(l.id)+'</p>'+
       '<div class="ddl-box tone-'+dl.tone+'"><div><p class="lbl">'+I.cal+'Fim do recebimento de propostas</p><p class="val" style="font-weight:600">'+fmtDT(l.dataEncerramento)+'</p></div><p class="big">'+dl.label+'</p></div>'+
       '<dl class="dgrid">'+
-        '<div class="dcell full"><dt>'+I.landmark+'Órgão</dt><dd>'+esc(l.orgao||"—")+'</dd></div>'+
+        '<div class="dcell full"><dt>'+I.landmark+'Unidade compradora</dt><dd id="uc-txt" style="font-weight:600;color:#fff">'+esc(parseUasgAndUnidade(l.orgao, l.id, l.linkPncp, l.linkSistemaOrigem))+'</dd></div>'+
+        '<div class="dcell" id="edital-cell"><dt>'+I.file+'Nº do Edital / Processo</dt><dd id="edital-txt" class="fm" style="font-weight:600;color:#fff">'+(esc(extractNumeroEdital(l)) || "—")+'</dd></div>'+
+        '<div class="dcell" id="uasg-cell"><dt>'+I.receipt+'UASG</dt><dd id="uasg-txt" class="fm" style="font-weight:600;color:#d9f99d">'+(esc(extractUasg(l, null)) || "—")+'</dd></div>'+
+        '<div class="dcell"><dt>'+I.radar+'Fonte</dt><dd>'+esc(l.portalNome||"PNCP")+'</dd></div>'+
         '<div class="dcell"><dt>'+I.pin+'Localidade</dt><dd>'+esc(l.municipio||"—")+(l.uf?" / "+esc(l.uf):"")+'</dd></div>'+
         '<div class="dcell"><dt>Esfera</dt><dd>'+esc(l.esfera?(ESFERA[l.esfera]||l.esfera):"—")+'</dd></div>'+
         '<div class="dcell"><dt>'+I.receipt+'Valor estimado</dt><dd class="fm" style="color:#d9f99d">'+(l.orcamentoSigiloso?"Sigiloso":fmtBRL(l.valorEstimado))+'</dd></div>'+
@@ -867,8 +1702,9 @@ function openDrawer(l){
         '<div class="dcell"><dt>Abertura</dt><dd>'+fmtDT(l.dataAbertura)+'</dd></div>'+
       '</dl>'+
       '<div class="obj" id="obj-zone" style="display:'+((l.resumo&&l.resumo!==l.titulo)?"block":"none")+'"><p class="k">Objeto</p><p id="obj-txt">'+esc(l.resumo||"")+'</p></div>'+
-      '<div class="itens"><p class="k">'+I.pkg+'Itens</p><div id="itens-zone"><div class="loading-note"><svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="3" opacity=".2"/><path d="M22 12a10 10 0 0 0-10-10" stroke-width="3" stroke-linecap="round"/></svg>Carregando itens…</div></div></div>'+
-    '</div>'+
+      '<div class="itens"><p class="k">'+I.file+'Documentos e Anexos <span id="docs-count" style="font-size:11px;color:var(--fog)"></span></p><div id="docs-zone"><div class="loading-note"><svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="3" opacity=".2"/><path d="M22 12a10 10 0 0 0-10-10" stroke-width="3" stroke-linecap="round"/></svg>Carregando documentos…</div></div></div>'+
+    '<div class="itens"><p class="k">'+I.pkg+'Itens da Licitação <span id="itens-count" style="font-size:11px;color:var(--fog)"></span></p><div id="itens-zone"><div class="loading-note"><svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="3" opacity=".2"/><path d="M22 12a10 10 0 0 0-10-10" stroke-width="3" stroke-linecap="round"/></svg>Carregando itens…</div></div></div>'+
+      '</div>'+
     '<div class="drawer-foot">'+
       (l.linkPncp?'<a class="act act-pncp" href="'+esc(l.linkPncp)+'" target="_blank" rel="noopener noreferrer">'+I.ext+'Abrir no PNCP</a>':"")+
       (l.linkSistemaOrigem?'<a class="act" style="border-color:'+cor+'55;color:'+cor+';background:'+cor+'12" href="'+esc(l.linkSistemaOrigem)+'" target="_blank" rel="noopener noreferrer">'+I.ext+(l.portalNome?"Ir ao "+esc(l.portalNome):"Sistema de origem")+'</a>':"")+
@@ -877,41 +1713,280 @@ function openDrawer(l){
   '</aside>';
   requestAnimationFrame(()=>{ $("#ovl").classList.add("on"); $("#drw").classList.add("on"); });
   document.body.style.overflow="hidden";
+  const initialUasg = extractUasg(l, null);
+  if(initialUasg && $("#uasg-txt")) $("#uasg-txt").textContent = initialUasg;
   $("#ovl").addEventListener("click",closeDrawer);
   $("#drw-close").addEventListener("click",closeDrawer);
-  $("#drw-fav").addEventListener("click",()=>{ toggleFavorite(l); closeDrawer(); });
+  $("#drw-fav").addEventListener("click",()=>{ toggleFavorite(l); });
   drawerEl=$("#drw");
-  // detalhe completo (resumo + itens)
-  fetchDetail(l.id).then(d=>{
+  // detalhe completo (resumo + itens + documentos)
+  fetchDetail(l.id, l.linkPncp, l.linkSistemaOrigem).then(d=>{
+    if(!$("#drawer-root").contains($("#drw"))) return;
     if(d&&d.licitacao&&d.licitacao.resumo&&d.licitacao.resumo!==l.titulo){
       const oz=$("#obj-zone"), ot=$("#obj-txt");
       if(oz&&ot){ ot.textContent=d.licitacao.resumo; oz.style.display="block"; }
     }
-    const z=$("#itens-zone"); if(!z) return;
+    const editalVal = extractNumeroEdital(l, d);
+    const editalTxt = $("#edital-txt");
+    if(editalTxt && editalVal){
+      editalTxt.textContent = editalVal;
+    }
+    const uasgVal = extractUasg(l, d);
+    const uasgTxt = $("#uasg-txt");
+    if(uasgTxt && uasgVal){
+      uasgTxt.textContent = uasgVal;
+    }
+    if(d&&d.unidadeCompradora){
+      const ucEl=$("#uc-txt");
+      if(ucEl) ucEl.textContent = d.unidadeCompradora;
+    } else if(uasgVal){
+      const ucEl=$("#uc-txt");
+      if(ucEl && l.orgao && !ucEl.textContent.includes(uasgVal)){
+        ucEl.textContent = uasgVal + " - " + l.orgao;
+      }
+    }
+    const z=$("#itens-zone");
     const its=(d&&d.itens)||[];
-    if(!its.length){ z.innerHTML='<p style="margin-top:.5rem;font-size:13px;color:rgba(139,152,169,.7)">Itens não disponíveis na base pública.</p>'; return; }
-    z.innerHTML='<div class="itab"><table><thead><tr><th>#</th><th>Item</th><th style="text-align:right">Qtd.</th><th style="text-align:right">Vlr. total</th></tr></thead><tbody>'+
-      its.slice(0,60).map((it,idx)=>'<tr><td class="td-m">'+(it.numero_item!=null?it.numero_item:idx+1)+'</td><td>'+ esc(it.titulo||it.descricao||"—")+'</td><td class="td-m" style="text-align:right">'+(it.quantidade!=null?esc(String(it.quantidade))+" "+esc(it.unidade||""):"—")+'</td><td class="td-v">'+(it.valor_total!=null?fmtBRL(it.valor_total):"—")+'</td></tr>').join("")+
-    '</tbody></table>'+(its.length>60?'<p class="more-note">+ '+(its.length-60)+' itens — veja todos no sistema de origem</p>':"")+'</div>';
-  }).catch(()=>{ const z=$("#itens-zone"); if(z) z.innerHTML='<p style="margin-top:.5rem;font-size:13px;color:rgba(139,152,169,.7)">Não foi possível carregar os itens.</p>'; });
+    const itCount=$("#itens-count");
+    if(itCount && its.length) itCount.textContent="("+its.length+")";
+    if(z){
+      if(!its.length){
+        z.innerHTML='<p style="margin-top:.5rem;font-size:13px;color:rgba(139,152,169,.7)">Itens não disponíveis na base pública.</p>';
+      } else {
+        // Ordenação estritamente numérica dos itens (1, 2, 3 ... 10, 11)
+        const sortedItems = its.slice().sort((a,b)=>{
+          const na = a.numero_item != null ? Number(a.numero_item) : 0;
+          const nb = b.numero_item != null ? Number(b.numero_item) : 0;
+          return na - nb;
+        });
+
+        let itemPage = 1;
+        let itemPageSize = 10; // Padrão: 10 itens
+
+        function renderItemsTable(){
+          const totalItems = sortedItems.length;
+          const isAll = (itemPageSize === "all" || itemPageSize >= totalItems);
+          const limit = isAll ? totalItems : Number(itemPageSize);
+          const totalPages = isAll ? 1 : Math.max(1, Math.ceil(totalItems / limit));
+          if(itemPage > totalPages) itemPage = totalPages;
+          if(itemPage < 1) itemPage = 1;
+
+          const startIdx = isAll ? 0 : (itemPage - 1) * limit;
+          const endIdx = isAll ? totalItems : Math.min(startIdx + limit, totalItems);
+          const pageItems = sortedItems.slice(startIdx, endIdx);
+
+          let controlsHtml = '';
+          if(totalItems >= 10){
+            controlsHtml = 
+              '<div class="itens-controls">' +
+                '<div class="itens-per-page">' +
+                  '<span>Mostrar:</span>' +
+                  '<select id="sel-item-pagesize">' +
+                    '<option value="10"'+(String(itemPageSize)==="10"?" selected":"")+'>10 itens</option>' +
+                    '<option value="50"'+(String(itemPageSize)==="50"?" selected":"")+'>50 itens</option>' +
+                    '<option value="100"'+(String(itemPageSize)==="100"?" selected":"")+'>100 itens</option>' +
+                    '<option value="all"'+(String(itemPageSize)==="all"?" selected":"")+'>Todos os itens ('+totalItems+')</option>' +
+                  '</select>' +
+                '</div>' +
+                (!isAll && totalPages > 1 ? (
+                  '<div class="itens-nav">' +
+                    '<button type="button" class="itens-nav-btn" id="btn-item-prev" '+(itemPage===1?"disabled":"")+'>Anterior</button>' +
+                    '<span class="itens-page-info">Pág. <strong>'+itemPage+'</strong> de <strong>'+totalPages+'</strong> ('+(startIdx+1)+'–'+endIdx+' de '+totalItems+')</span>' +
+                    '<button type="button" class="itens-nav-btn" id="btn-item-next" '+(itemPage===totalPages?"disabled":"")+'>Próxima</button>' +
+                  '</div>'
+                ) : '<span class="itens-page-info">Exibindo todos os '+totalItems+' itens</span>') +
+              '</div>';
+          }
+
+          z.innerHTML = controlsHtml + '<div class="itab"><table><thead><tr><th style="width:40px">#</th><th>Item</th><th style="text-align:right">Qtd.</th><th style="text-align:right">V. Unitário</th><th style="text-align:right">Vlr. total</th></tr></thead><tbody>' +
+            pageItems.map((it,idx)=>{
+              const itemNum = it.numero_item != null ? it.numero_item : (startIdx + idx + 1);
+              let itemNome = it.descricao || it.especificacao || it.titulo || ("Item " + itemNum);
+              if((l.titulo && itemNome.trim() === l.titulo.trim()) || (l.resumo && itemNome.trim() === l.resumo.trim())){
+                if(it.descricao && it.descricao.trim() !== l.titulo.trim() && it.descricao.trim() !== (l.resumo||"").trim()){
+                  itemNome = it.descricao;
+                } else if(it.especificacao && it.especificacao.trim() !== l.titulo.trim()){
+                  itemNome = it.especificacao;
+                } else {
+                  itemNome = "Item " + itemNum;
+                }
+              }
+              return '<tr><td class="td-m" style="font-weight:600;color:#fff">'+itemNum+'</td>'+
+                '<td><p style="font-weight:500;color:#fff;line-height:1.45">'+esc(itemNome)+'</p></td>'+
+                '<td class="td-m" style="text-align:right">'+(it.quantidade!=null?esc(String(it.quantidade))+" "+esc(it.unidade||""):"—")+'</td>'+
+                '<td class="td-m" style="text-align:right;color:rgba(217,249,157,.85)">'+(it.valor_unitario!=null?fmtBRL(it.valor_unitario):"—")+'</td>'+
+                '<td class="td-v">'+(it.valor_total!=null?fmtBRL(it.valor_total):"—")+'</td></tr>';
+            }).join("") +
+          '</tbody></table></div>';
+
+          const selSize = $("#sel-item-pagesize");
+          if(selSize){
+            selSize.addEventListener("change", (e)=>{
+              itemPageSize = e.target.value === "all" ? "all" : Number(e.target.value);
+              itemPage = 1;
+              renderItemsTable();
+            });
+          }
+
+          const btnPrev = $("#btn-item-prev");
+          if(btnPrev){
+            btnPrev.addEventListener("click", ()=>{
+              if(itemPage > 1){
+                itemPage--;
+                renderItemsTable();
+              }
+            });
+          }
+
+          const btnNext = $("#btn-item-next");
+          if(btnNext){
+            btnNext.addEventListener("click", ()=>{
+              if(itemPage < totalPages){
+                itemPage++;
+                renderItemsTable();
+              }
+            });
+          }
+        }
+
+        renderItemsTable();
+      }
+    }
+
+    const dz=$("#docs-zone");
+    const docs=(d&&d.documentos)||[];
+    const docCount=$("#docs-count");
+    if(docCount && docs.length) docCount.textContent="("+docs.length+")";
+    if(dz){
+      if(!docs.length){
+        dz.innerHTML='<p style="margin-top:.5rem;font-size:13px;color:rgba(139,152,169,.7)">Nenhum documento disponível no momento.</p>';
+      } else {
+        dz.innerHTML='<div class="docs-list">'+docs.map(doc=>
+          '<div class="doc-card"><div style="min-width:0;flex:1"><p class="dt">'+esc(doc.titulo)+'</p>'+
+          '<div class="dm">'+(doc.tipoNome?'<span>'+esc(doc.tipoNome)+'</span>':"")+
+          (doc.dataPublicacao?'<span>•</span><span>'+fmtDT(doc.dataPublicacao)+'</span>':"")+
+          '</div></div>'+
+          (doc.url?'<a class="dbtn" href="'+esc(doc.url)+'" target="_blank" rel="noopener noreferrer">'+I.download+'Acessar</a>':"")+
+          '</div>').join("")+'</div>';
+      }
+    }
+  }).catch(()=>{
+    const z=$("#itens-zone"); if(z) z.innerHTML='<p style="margin-top:.5rem;font-size:13px;color:rgba(139,152,169,.7)">Não foi possível carregar os itens.</p>';
+    const dz=$("#docs-zone"); if(dz) dz.innerHTML='<p style="margin-top:.5rem;font-size:13px;color:rgba(139,152,169,.7)">Não foi possível carregar os documentos.</p>';
+  });
 }
 function closeDrawer(){
+  if(drawerCloseTimer){
+    clearTimeout(drawerCloseTimer);
+    drawerCloseTimer=null;
+  }
   const root=$("#drawer-root");
   const ovl=$("#ovl"), drw=$("#drw");
   if(ovl) ovl.classList.remove("on");
   if(drw) drw.classList.remove("on");
   document.body.style.overflow="";
-  setTimeout(()=>{ root.innerHTML=""; },320);
+  drawerCloseTimer=setTimeout(()=>{
+    root.innerHTML="";
+    drawerCloseTimer=null;
+  },320);
 }
 
-/* ---------- favoritos ---------- */
-function toggleFavorite(l){
-  const favs=favIds();
-  if(favs.has(l.id)){ favorites=favorites.filter(f=>f.id!==l.id); toast("Removido dos favoritos"); }
-  else { favorites.unshift({id:l.id,titulo:l.titulo,orgao:l.orgao,uf:l.uf,municipio:l.municipio,modalidadeNome:l.modalidadeNome,portalNome:l.portalNome,dataEncerramento:l.dataEncerramento,linkPncp:l.linkPncp,linkSistemaOrigem:l.linkSistemaOrigem}); toast("Salvo nos favoritos"); }
-  persist("radar:favorites",favorites);
-  $("#fav-count").textContent=String(favorites.length);
+
+/* ---------- limpar todas as licitações salvas ---------- */
+async function clearAllSaved(){
+  if(!favorites.length){
+    toast("Você não possui licitações salvas.");
+    return;
+  }
+  const confirmed = window.confirm("Deseja realmente limpar todas as licitações salvas?");
+  if(!confirmed) return;
+
+  const count = favorites.length;
+  favorites = [];
+  persist("radar:favorites", favorites);
+  updateFavoritesCount();
+
+  const sb = getSupabase();
+  if(currentUser && sb){
+    try {
+      await sb.from("licitacoes_salvas")
+        .delete()
+        .eq("user_id", currentUser.id);
+    } catch(err){
+      console.warn("Erro ao limpar salvas no Supabase:", err);
+    }
+  }
+
+  toast(count + " licitação(ões) salva(s) removida(s).");
+  renderHeader();
   renderGrid();
+}
+
+/* ---------- favoritos & persistência Supabase ---------- */
+async function toggleFavorite(l){
+  cleanExpiredFavorites();
+  const favs=favIds();
+  const sb = getSupabase();
+
+  if(favs.has(l.id)){
+    favorites=favorites.filter(f=>f.id!==l.id);
+    persist("radar:favorites",favorites);
+    updateFavoritesCount();
+    toast("Removido das licitações salvas");
+    if(currentUser && sb){
+      sb.from("licitacoes_salvas")
+        .delete()
+        .eq("user_id", currentUser.id)
+        .eq("numero_controle_pncp", l.id)
+        .catch(()=>{});
+    }
+  } else {
+    const item = {
+      id: l.id,
+      titulo: l.titulo,
+      resumo: l.resumo || null,
+      orgao: l.orgao,
+      uf: l.uf,
+      municipio: l.municipio,
+      modalidadeNome: l.modalidadeNome,
+      portalNome: l.portalNome,
+      dataEncerramento: l.dataEncerramento,
+      linkPncp: l.linkPncp,
+      linkSistemaOrigem: l.linkSistemaOrigem,
+      valorEstimado: l.valorEstimado
+    };
+    favorites.unshift(item);
+    persist("radar:favorites",favorites);
+    updateFavoritesCount();
+    toast("Licitação salva com sucesso!");
+
+    if(currentUser && sb){
+      sb.from("licitacoes_salvas").upsert({
+        user_id: currentUser.id,
+        numero_controle_pncp: l.id,
+        titulo: l.titulo,
+        resumo: l.resumo || null,
+        orgao: l.orgao,
+        uf: l.uf,
+        municipio: l.municipio,
+        modalidade_nome: l.modalidadeNome,
+        portal_nome: l.portalNome,
+        data_encerramento: l.dataEncerramento,
+        link_pncp: l.linkPncp,
+        link_sistema_origem: l.linkSistemaOrigem,
+        valor_estimado: l.valorEstimado
+      }, { onConflict: "user_id,numero_controle_pncp" }).then(({error})=>{
+        if(error) console.warn("Erro ao salvar no Supabase:", error);
+      }).catch(err=>console.warn("Save remote error:", err));
+    }
+  }
+
+  if(currentView === "saved"){
+    renderHeader();
+    renderGrid();
+  } else {
+    renderGrid();
+  }
 }
 function openFavoritesModal(){
   const root=$("#modal-root");
@@ -946,7 +2021,7 @@ function renderSavedBar(){
     savedSearches.map((s,i)=>'<span class="saved-chip"><button type="button" class="apply" data-i="'+i+'">'+esc(s.name)+'</button><button type="button" class="rm" data-i="'+i+'" aria-label="Excluir busca">'+I.x.replace('width="16" height="16"','width="12" height="12"')+'</button></span>').join("");
   bar.querySelectorAll(".apply").forEach(b=>b.addEventListener("click",()=>{
     const s=savedSearches[Number(b.dataset.i)];
-    F={...EMPTY,...(s.filters||{})}; page=1; renderDock(); renderSavedBar(); runSearch();
+    F={...EMPTY,...(s.filters||{})}; page=1; renderDock(); renderResultsToolbar(); renderSavedBar(); runSearch();
   }));
   bar.querySelectorAll(".rm").forEach(b=>b.addEventListener("click",()=>{
     savedSearches.splice(Number(b.dataset.i),1); persist("radar:savedSearches",savedSearches); renderSavedBar();
@@ -973,6 +2048,331 @@ function openSaveModal(){
   $("#mcancel").addEventListener("click",close);
 }
 
+
+/* ---------- navegação de abas (Todas vs Salvas) ---------- */
+function switchView(view){
+  currentView = view;
+  const tAll = $("#tab-all") || $("#tab-view-all");
+  const tSaved = $("#tab-saved") || $("#tab-view-saved");
+  const btnDockSaved = $("#btn-filter-saved");
+  const filterDock = $("#dock");
+  const pag = $("#pgn");
+
+  if(tAll && tSaved){
+    tAll.classList.toggle("active", view === "all");
+    tSaved.classList.toggle("active", view === "saved");
+  }
+  if(btnDockSaved){
+    btnDockSaved.style.background = (view === "saved") ? "rgba(163,230,53,.35)" : "rgba(163,230,53,.1)";
+    btnDockSaved.style.borderColor = (view === "saved") ? "#a3e635" : "rgba(163,230,53,.3)";
+  }
+
+  cleanExpiredFavorites();
+  updateFavoritesCount();
+
+  if(view === "saved"){
+    if(pag) pag.style.display = "none";
+  } else {
+    if(pag) pag.style.display = "";
+  }
+
+  renderHeader();
+  renderGrid();
+}
+
+/* ---------- autenticação & Supabase UI ---------- */
+function renderAuthNav(){
+  const slot = $("#auth-nav-slot");
+  if(!slot) return;
+
+  if(currentUser){
+    const email = currentUser.email || "Usuário";
+    const initial = (email[0] || "U").toUpperCase();
+    slot.innerHTML =
+      '<div class="user-badge" id="user-profile-btn" style="cursor:pointer" title="Conectado como '+esc(email)+'"> ' +
+        '<div class="avatar">'+esc(initial)+'</div>' +
+        '<span style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(email)+'</span>' +
+      '</div>' +
+      '<button type="button" class="auth-btn auth-btn-secondary" id="btn-auth-logout" title="Sair">'+I.logOut+'<span>Sair</span></button>';
+
+    const btnLogout = $("#btn-auth-logout");
+    if(btnLogout) btnLogout.onclick = logoutUser;
+
+    const btnProf = $("#user-profile-btn");
+    if(btnProf) btnProf.onclick = openConfigModal;
+  } else {
+    slot.innerHTML =
+      '<button type="button" class="auth-btn auth-btn-primary" id="btn-auth-open-login" onclick="openAuthModal(\'login\')">'+I.logIn+'<span>Entrar / Cadastrar</span></button>';
+    const btnLogin = $("#btn-auth-open-login");
+    if(btnLogin) btnLogin.onclick = () => openAuthModal("login");
+  }
+}
+
+function openAuthModal(mode = "login"){
+  authMode = mode;
+  let modal = $("#auth-modal");
+  if(!modal){
+    modal = document.createElement("div");
+    modal.id = "auth-modal";
+    modal.className = "auth-modal-overlay";
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML =
+    '<div class="auth-modal-box">' +
+      '<button type="button" class="auth-modal-close" id="btn-auth-modal-close">&times;</button>' +
+      '<div class="auth-modal-header">' +
+        '<h3>'+(authMode==="login" ? "Entrar na sua Conta" : "Criar Nova Conta")+'</h3>' +
+        '<p>Sincronize suas licitações salvas na nuvem com o banco de dados Supabase.</p>' +
+      '</div>' +
+      '<form id="auth-form" style="display:flex;flex-direction:column;gap:1rem">' +
+        '<div class="auth-field">' +
+          '<label>E-mail institucional ou pessoal</label>' +
+          '<input type="email" id="auth-email" required placeholder="seu@email.com" autocomplete="email">' +
+        '</div>' +
+        '<div class="auth-field">' +
+          '<label>Senha de acesso</label>' +
+          '<input type="password" id="auth-password" required placeholder="••••••••" autocomplete="current-password">' +
+        '</div>' +
+        '<button type="submit" class="auth-btn auth-btn-primary" id="btn-auth-submit" style="padding:.75rem;justify-content:center;margin-top:.5rem">' +
+          (authMode==="login" ? "Acessar Conta" : "Cadastrar Conta") +
+        '</button>' +
+      '</form>' +
+      '<div style="margin-top:1.25rem;text-align:center;font-size:13px;color:#94a3b8">' +
+        (authMode==="login" ?
+          'Ainda não tem conta? <a href="#" id="auth-toggle-mode" style="color:#a3e635;font-weight:600">Criar cadastro</a>' :
+          'Já tem uma conta? <a href="#" id="auth-toggle-mode" style="color:#a3e635;font-weight:600">Fazer login</a>') +
+      '</div>' +
+      '<div style="margin-top:1.2rem;border-top:1px dashed rgba(255,255,255,.1);padding-top:.85rem;text-align:center">' +
+        '<button type="button" id="auth-open-config" style="background:none;border:none;color:#64748b;font-size:12px;cursor:pointer;text-decoration:underline">⚙ Configurar Credenciais do Supabase (URL / Chave)</button>' +
+      '</div>' +
+    '</div>';
+
+  modal.classList.add("active");
+
+  $("#btn-auth-modal-close").addEventListener("click", closeAuthModal);
+  $("#auth-modal").addEventListener("click", (e)=>{
+    if(e.target === modal) closeAuthModal();
+  });
+
+  const toggleBtn = $("#auth-toggle-mode");
+  if(toggleBtn){
+    toggleBtn.addEventListener("click", (e)=>{
+      e.preventDefault();
+      openAuthModal(authMode==="login" ? "signup" : "login");
+    });
+  }
+
+  const confBtn = $("#auth-open-config");
+  if(confBtn){
+    confBtn.addEventListener("click", (e)=>{
+      e.preventDefault();
+      closeAuthModal();
+      openConfigModal();
+    });
+  }
+
+  const form = $("#auth-form");
+  if(form){
+    form.addEventListener("submit", handleAuthSubmit);
+  }
+}
+
+function closeAuthModal(){
+  const modal = $("#auth-modal");
+  if(modal) modal.classList.remove("active");
+}
+
+async function handleAuthSubmit(e){
+  e.preventDefault();
+  const email = $("#auth-email").value.trim();
+  const password = $("#auth-password").value;
+  const submitBtn = $("#btn-auth-submit");
+
+  if(!email || !password){
+    toast("Preencha e-mail e senha");
+    return;
+  }
+
+  const sb = getSupabase();
+  if(!sb){
+    toast("Erro ao inicializar conexão com o Supabase");
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Processando…";
+
+  try {
+    if(authMode === "signup"){
+      const { data, error } = await sb.auth.signUp({ email, password });
+      if(error){
+        toast("Erro ao cadastrar: " + error.message);
+      } else {
+        if(data.session){
+          currentUser = data.user;
+          onUserLoggedIn(data.user);
+          closeAuthModal();
+          toast("Conta criada e conectada com sucesso!");
+        } else if(data.user && (!data.user.identities || data.user.identities.length === 0)){
+          toast("Este e-mail já está cadastrado. Faça login.");
+          openAuthModal("login");
+        } else {
+          closeAuthModal();
+          toast("Conta criada! Se o Supabase exigir confirmação, verifique seu e-mail.");
+        }
+      }
+    } else {
+      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      if(error){
+        if(error.message.includes("Email not confirmed")){
+          toast("E-mail ainda não confirmado no Supabase. Desative 'Confirm email' nas configurações ou confirme a mensagem.");
+        } else if(error.message.includes("Invalid login credentials")){
+          toast("E-mail ou senha incorretos.");
+        } else {
+          toast("Falha no login: " + error.message);
+        }
+      } else {
+        closeAuthModal();
+        if(data.user){
+          currentUser = data.user;
+          onUserLoggedIn(data.user);
+        }
+        toast("Login realizado com sucesso!");
+      }
+    }
+  } catch(err){
+    toast("Ocorreu um erro na autenticação");
+    console.error(err);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = authMode==="login" ? "Acessar Conta" : "Cadastrar Conta";
+  }
+}
+
+async function logoutUser(){
+  const sb = getSupabase();
+  if(sb && sb.auth){
+    await sb.auth.signOut();
+  }
+  currentUser = null;
+  renderAuthNav();
+  toast("Você saiu da sua conta.");
+  if(currentView === "saved"){
+    renderHeader();
+    renderGrid();
+  }
+}
+
+function openConfigModal(){
+  let modal = $("#config-modal");
+  if(!modal){
+    modal = document.createElement("div");
+    modal.id = "config-modal";
+    modal.className = "auth-modal-overlay";
+    document.body.appendChild(modal);
+  }
+
+  const curUrl = (customSupabaseConfig && customSupabaseConfig.url) || USER_SB_URL;
+  const curKey = (customSupabaseConfig && customSupabaseConfig.key) || USER_SB_KEY;
+
+  modal.innerHTML =
+    '<div class="auth-modal-box">' +
+      '<button type="button" class="auth-modal-close" id="btn-config-modal-close">&times;</button>' +
+      '<div class="auth-modal-header">' +
+        '<h3>Configuração do Banco Supabase</h3>' +
+        '<p>Insira a URL e a Anon Key do seu projeto Supabase para vincular seu banco de dados diretamente.</p>' +
+      '</div>' +
+      '<form id="config-form" style="display:flex;flex-direction:column;gap:1rem">' +
+        '<div class="auth-field">' +
+          '<label>Supabase Project URL</label>' +
+          '<input type="url" id="sb-input-url" required value="'+esc(curUrl)+'" placeholder="https://xyz.supabase.co">' +
+        '</div>' +
+        '<div class="auth-field">' +
+          '<label>Supabase Anon Key</label>' +
+          '<input type="text" id="sb-input-key" required value="'+esc(curKey)+'" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">' +
+        '</div>' +
+        '<div style="display:flex;gap:.75rem;margin-top:.5rem">' +
+          '<button type="submit" class="auth-btn auth-btn-primary" style="flex:1;padding:.75rem;justify-content:center">Salvar Credenciais</button>' +
+          '<button type="button" id="btn-reset-config" class="auth-btn auth-btn-secondary" style="padding:.75rem">Restaurar Padrão</button>' +
+        '</div>' +
+      '</form>' +
+    '</div>';
+
+  modal.classList.add("active");
+  $("#btn-config-modal-close").addEventListener("click", ()=>modal.classList.remove("active"));
+  modal.addEventListener("click", (e)=>{ if(e.target === modal) modal.classList.remove("active"); });
+
+  $("#btn-reset-config").addEventListener("click", ()=>{
+    customSupabaseConfig = null;
+    localStorage.removeItem("radar:supabaseConfig");
+    supabaseClient = null;
+    toast("Configuração padrão restaurada!");
+    modal.classList.remove("active");
+    initAuth();
+  });
+
+  $("#config-form").addEventListener("submit", (e)=>{
+    e.preventDefault();
+    const url = $("#sb-input-url").value.trim();
+    const key = $("#sb-input-key").value.trim();
+    if(!url || !key){
+      toast("Preencha URL e Anon Key");
+      return;
+    }
+    customSupabaseConfig = { url, key };
+    persist("radar:supabaseConfig", customSupabaseConfig);
+    supabaseClient = null;
+    toast("Credenciais do Supabase salvas!");
+    modal.classList.remove("active");
+    initAuth();
+  });
+}
+
+
+/* ---------- PWA & Service Worker & Console Support ---------- */
+let deferredPrompt = null;
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallAppBanner();
+});
+
+function showInstallAppBanner(){
+  if($('#pwa-install-banner') || !deferredPrompt) return;
+  const banner = document.createElement('div');
+  banner.id = 'pwa-install-banner';
+  banner.style.cssText = 'position:fixed;bottom:1rem;left:1rem;right:1rem;max-width:440px;margin:0 auto;background:#0c1117;border:1px solid rgba(163,230,53,.4);box-shadow:0 15px 35px rgba(0,0,0,.8);border-radius:14px;padding:.85rem 1rem;display:flex;align-items:center;justify-content:space-between;gap:.75rem;z-index:9000;animation:fadeUp .3s ease-out';
+  banner.innerHTML =
+    '<div style="display:flex;align-items:center;gap:.6rem">' +
+      '<div style="width:36px;height:36px;border-radius:8px;background:rgba(163,230,53,.2);color:#a3e635;display:flex;align-items:center;justify-content:center;font-weight:bold">' + I.download + '</div>' +
+      '<div><p style="font-size:13px;font-weight:700;color:#fff;margin:0">Instalar Aplicativo</p><p style="font-size:11px;color:#94a3b8;margin:0">Acesse direto da tela inicial do celular</p></div>' +
+    '</div>' +
+    '<div style="display:flex;align-items:center;gap:.4rem">' +
+      '<button type="button" id="btn-pwa-dismiss" style="background:none;border:none;color:#64748b;font-size:16px;cursor:pointer;padding:.3rem">&times;</button>' +
+      '<button type="button" id="btn-pwa-install" style="background:#a3e635;color:#090d12;font-weight:700;font-size:12px;border:none;border-radius:8px;padding:.45rem .85rem;cursor:pointer">Instalar</button>' +
+    '</div>';
+  document.body.appendChild(banner);
+
+  $('#btn-pwa-dismiss').addEventListener('click', () => { banner.remove(); });
+  $('#btn-pwa-install').addEventListener('click', async () => {
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      if(choice.outcome === 'accepted'){
+        toast('Aplicativo instalado com sucesso!');
+      }
+      deferredPrompt = null;
+      banner.remove();
+    }
+  });
+}
+
 /* ---------- boot ---------- */
 document.addEventListener("keydown",e=>{
   if(e.key==="Escape"){
@@ -982,12 +2382,23 @@ document.addEventListener("keydown",e=>{
 });
 function boot(){
   $("#logo-icon").innerHTML=I.radio;
-  $("#heart-icon").innerHTML=I.heart;
-  $("#foot-logo").insertAdjacentHTML("afterbegin",'<span style="color:var(--signal);display:flex">'+I.radio.replace('width="20" height="20"','width="16" height="16"')+'</span>');
-  $("#btn-favorites").addEventListener("click",openFavoritesModal);
-  $("#fav-count").textContent=String(favorites.length);
+  const hIcon = $("#heart-icon");
+  if(hIcon) hIcon.innerHTML=I.heart;
+  const btnFav = $("#btn-favorites");
+  if(btnFav) btnFav.addEventListener("click",openFavoritesModal);
+  const footLogo = $("#foot-logo");
+  if(footLogo) footLogo.insertAdjacentHTML("afterbegin",'<span style="color:var(--signal);display:flex">'+I.radio.replace('width="20" height="20"','width="16" height="16"')+'</span>');
+
+  const tabAll = $("#tab-all") || $("#tab-view-all");
+  if(tabAll) tabAll.onclick = ()=>switchView("all");
+  const tabSaved = $("#tab-saved") || $("#tab-view-saved");
+  if(tabSaved) tabSaved.onclick = ()=>switchView("saved");
+
+  cleanExpiredFavorites();
+  updateFavoritesCount();
   $("#st-portais").textContent=String(PORTAIS.length);
-  renderTicker(); renderSavedBar(); renderDock(); renderHeader(); runSearch(); fetchFacets();
+  renderTicker(); renderSavedBar(); renderDock(); renderResultsToolbar(); renderHeader(); runSearch(); fetchFacets();
+  initAuth();
 }
 document.readyState==="loading" ? document.addEventListener("DOMContentLoaded",boot) : boot();
 </script>
