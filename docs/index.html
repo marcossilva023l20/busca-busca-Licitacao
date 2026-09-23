@@ -1283,6 +1283,15 @@ function renderResultsToolbar(){
         '<option value="valor_desc"'+(F.sort==="valor_desc"?" selected":"")+'>Maior valor estimado</option>'+
       '</select>'+
     '</div>'+
+    '<div class="sort-wrap">'+
+      '<p class="flabel" style="margin-bottom:0;white-space:nowrap">'+I.layers+'Exibir</p>'+
+      '<select class="field" id="f-pagesize" style="height:44px">'+
+        '<option value="10"'+((!showAll && PAGE_SIZE===10)?" selected":"")+'>10 licitações</option>'+
+        '<option value="50"'+((!showAll && PAGE_SIZE===50)?" selected":"")+'>50 licitações</option>'+
+        '<option value="100"'+((!showAll && PAGE_SIZE===100)?" selected":"")+'>100 licitações</option>'+
+        '<option value="all"'+(showAll?" selected":"")+'>Todas as licitações</option>'+
+      '</select>'+
+    '</div>'+
     '<button type="button" class="btn-all-res" id="btn-all">'+I.layers+'Mostrar todos os resultados</button>';
 
   let deb=null;
@@ -1290,9 +1299,25 @@ function renderResultsToolbar(){
   if(fq) fq.addEventListener("input",e=>{ clearTimeout(deb); const v=e.target.value; deb=setTimeout(()=>setF({q:v}),450); });
   const fs=$("#f-sort");
   if(fs) fs.addEventListener("change",e=>setF({sort:e.target.value}));
+  const fps=$("#f-pagesize");
+  if(fps) fps.addEventListener("change",e=>{
+    const v = e.target.value;
+    if(v === "all"){
+      showAll = true;
+      PAGE_SIZE = 1000;
+      toast("Exibindo todas as licitações em uma só página");
+    } else {
+      showAll = false;
+      PAGE_SIZE = Number(v);
+      toast("Exibindo " + v + " licitações por página");
+    }
+    page = 1;
+    renderResultsToolbar();
+    runSearch();
+  });
   const btnAll=$("#btn-all");
   if(btnAll) btnAll.addEventListener("click",()=>{
-    page=1; showAll=true; renderResultsToolbar(); runSearch(); renderSavedBar(); toast("Exibindo todos os resultados em uma só página");
+    page=1; showAll=true; PAGE_SIZE=1000; renderResultsToolbar(); runSearch(); renderSavedBar(); toast("Exibindo todos os resultados em uma só página");
   });
 }
 
@@ -1705,7 +1730,7 @@ function openDrawer(l){
           const pageItems = sortedItems.slice(startIdx, endIdx);
 
           let controlsHtml = '';
-          if(totalItems > 10){
+          if(totalItems >= 10){
             controlsHtml = 
               '<div class="itens-controls">' +
                 '<div class="itens-per-page">' +
@@ -1985,7 +2010,7 @@ function switchView(view){
   const tSaved = $("#tab-saved") || $("#tab-view-saved");
   const btnDockSaved = $("#btn-filter-saved");
   const filterDock = $("#dock");
-  const pag = $("#pagination");
+  const pag = $("#pgn");
 
   if(tAll && tSaved){
     tAll.classList.toggle("active", view === "all");
