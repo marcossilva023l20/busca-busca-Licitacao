@@ -1717,7 +1717,14 @@ function openDrawer(l){
   if(initialUasg && $("#uasg-txt")) $("#uasg-txt").textContent = initialUasg;
   $("#ovl").addEventListener("click",closeDrawer);
   $("#drw-close").addEventListener("click",closeDrawer);
-  $("#drw-fav").addEventListener("click",()=>{ toggleFavorite(l); });
+  $("#drw-fav").addEventListener("click",()=>{
+    const wasFav = favIds().has(l.id);
+    toggleFavorite(l);
+    if(wasFav && currentView === "saved"){
+      // Se estava vendo as salvas e removeu a atual, fecha suavemente o drawer
+      closeDrawer();
+    }
+  });
   drawerEl=$("#drw");
   // detalhe completo (resumo + itens + documentos)
   fetchDetail(l.id, l.linkPncp, l.linkSistemaOrigem).then(d=>{
@@ -1927,12 +1934,41 @@ async function toggleFavorite(l){
   cleanExpiredFavorites();
   const favs=favIds();
   const sb = getSupabase();
+  const isRemoving = favs.has(l.id);
 
-  if(favs.has(l.id)){
-    favorites=favorites.filter(f=>f.id!==l.id);
-    persist("radar:favorites",favorites);
+  if(isRemoving){
+    favorites = favorites.filter(f => f.id !== l.id);
+    persist("radar:favorites", favorites);
     updateFavoritesCount();
     toast("Removido das licitações salvas");
+
+    // Remove imediatamente o card do DOM se estiver na visualização de salvas com animação instantânea
+    if(currentView === "saved"){
+      const cardEl = document.querySelector('.card[data-id="' + CSS.escape(l.id) + '"]');
+      if(cardEl){
+        cardEl.style.transition = "opacity 0.2s ease, transform 0.2s ease";
+        cardEl.style.opacity = "0";
+        cardEl.style.transform = "scale(0.95)";
+        setTimeout(() => {
+          renderHeader();
+          renderGrid();
+        }, 180);
+      } else {
+        renderHeader();
+        renderGrid();
+      }
+    } else {
+      renderGrid();
+    }
+
+    // Se estiver na janela de detalhes aberta e estiver na visualização de salvas, fecha ou sincroniza
+    const drwFav = $("#drw-fav");
+    if(drwFav){
+      drwFav.classList.remove("on");
+      drwFav.innerHTML = I.heart + "Favoritar";
+      drwFav.setAttribute("title", "Salvar");
+    }
+
     if(currentUser && sb){
       sb.from("licitacoes_salvas")
         .delete()
@@ -1956,9 +1992,19 @@ async function toggleFavorite(l){
       valorEstimado: l.valorEstimado
     };
     favorites.unshift(item);
-    persist("radar:favorites",favorites);
+    persist("radar:favorites", favorites);
     updateFavoritesCount();
     toast("Licitação salva com sucesso!");
+
+    renderHeader();
+    renderGrid();
+
+    const drwFav = $("#drw-fav");
+    if(drwFav){
+      drwFav.classList.add("on");
+      drwFav.innerHTML = I.heart + "Salvo";
+      drwFav.setAttribute("title", "Remover das salvas");
+    }
 
     if(currentUser && sb){
       sb.from("licitacoes_salvas").upsert({
@@ -1981,18 +2027,7 @@ async function toggleFavorite(l){
     }
   }
 
-  // Atualiza imediatamente cabeçalho, contadores e o grid de licitações salvas
-  renderHeader();
-  renderGrid();
   updateFavoritesCount();
-
-  // Se a janela lateral de detalhes estiver aberta, sincroniza o botão Salvo/Favoritar
-  const drwFav = $("#drw-fav");
-  if(drwFav){
-    const nowFav = favIds().has(l.id);
-    drwFav.classList.toggle("on", nowFav);
-    drwFav.innerHTML = I.heart + (nowFav ? "Salvo" : "Favoritar");
-  }
 }
 function openFavoritesModal(){
   const root=$("#modal-root");
