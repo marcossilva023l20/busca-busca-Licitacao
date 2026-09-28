@@ -325,6 +325,12 @@ footer .fb{border-top:1px solid rgba(28,37,48,.5);padding:1rem;text-align:center
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 
 /* Auth, Tabs & UI Enhancements */
+/* Explicit Remove Button */
+.btn-card-remove{display:inline-flex;align-items:center;gap:.35rem;border-radius:8px;padding:.4rem .75rem;font-size:12px;font-weight:600;border:1px solid rgba(248,113,113,.4);background:rgba(248,113,113,.12);color:#fca5a5;cursor:pointer;transition:.2s}
+.btn-card-remove:hover{background:rgba(248,113,113,.25);border-color:#f87171;color:#fff}
+.act-remove{border-color:rgba(248,113,113,.4) !important;color:#fca5a5 !important;background:rgba(248,113,113,.12) !important}
+.act-remove:hover{background:rgba(248,113,113,.25) !important;border-color:#f87171 !important;color:#fff !important}
+
 
 /* Responsive Mobile & Console (Smart TVs / Game Consoles / Small Screens) */
 @media(max-width: 640px) {
@@ -1560,7 +1566,10 @@ function renderGrid(){
       const isFav=favs.has(l.id);
       return '<article class="card" data-id="'+esc(l.id)+'" style="animation-delay:'+Math.min(i*30,300)+'ms">'+
         '<div class="card-top"><div class="badges">'+portalBadge(l)+(l.modalidadeNome?'<span class="badge badge-mod">'+esc(l.modalidadeNome)+'</span>':"")+'</div>'+
-        '<button type="button" class="heart on" data-fav="'+esc(l.id)+'" aria-label="Remover das salvas" title="Remover">'+I.heart+'</button></div>'+
+        '<div style="display:flex;align-items:center;gap:.5rem">'+
+          '<button type="button" class="btn-card-remove" data-rm-id="'+esc(l.id)+'" title="Remover esta licitação das salvas">'+I.trash+'<span>Remover</span></button>'+
+          '<button type="button" class="heart on" data-fav="'+esc(l.id)+'" aria-label="Remover das salvas" title="Remover">'+I.heart+'</button>'+
+        '</div></div>'+
         '<h3>'+esc(l.titulo)+'</h3>'+
         (l.resumo ? '<div class="card-objeto"><p class="obj-lbl">'+I.file+'Descrição Completa do Objeto</p><p class="obj-content">'+esc(l.resumo)+'</p></div>' : '<div class="card-objeto"><p class="obj-lbl">'+I.file+'Descrição do Objeto</p><p class="obj-content">'+esc(l.titulo)+'</p></div>')+
         '<div class="card-highlight-row" style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center">'+
@@ -1577,14 +1586,20 @@ function renderGrid(){
 
     g.querySelectorAll(".card").forEach(c=>{
       c.addEventListener("click",e=>{
-        if(e.target.closest(".heart")) return;
+        if(e.target.closest(".heart") || e.target.closest(".btn-card-remove")) return;
         const l=displayList.find(x=>x.id===c.dataset.id); if(l) openDrawer(l);
+      });
+    });
+    g.querySelectorAll(".btn-card-remove").forEach(b=>{
+      b.addEventListener("click",e=>{
+        e.stopPropagation();
+        removeSavedItem(b.dataset.rmId);
       });
     });
     g.querySelectorAll(".heart").forEach(b=>{
       b.addEventListener("click",e=>{
         e.stopPropagation();
-        const l=displayList.find(x=>x.id===b.dataset.fav); if(l) toggleFavorite(l);
+        removeSavedItem(b.dataset.fav);
       });
     });
     return;
@@ -1709,6 +1724,7 @@ function openDrawer(l){
       (l.linkPncp?'<a class="act act-pncp" href="'+esc(l.linkPncp)+'" target="_blank" rel="noopener noreferrer">'+I.ext+'Abrir no PNCP</a>':"")+
       (l.linkSistemaOrigem?'<a class="act" style="border-color:'+cor+'55;color:'+cor+';background:'+cor+'12" href="'+esc(l.linkSistemaOrigem)+'" target="_blank" rel="noopener noreferrer">'+I.ext+(l.portalNome?"Ir ao "+esc(l.portalNome):"Sistema de origem")+'</a>':"")+
       '<button type="button" class="act act-fav'+(isFav?" on":"")+'" id="drw-fav">'+I.heart+(isFav?"Salvo":"Favoritar")+'</button>'+
+      (isFav?'<button type="button" class="act act-remove" id="drw-rm-btn">'+I.trash+'Remover das Salvas</button>':"")+
     '</div>'+
   '</aside>';
   requestAnimationFrame(()=>{ $("#ovl").classList.add("on"); $("#drw").classList.add("on"); });
@@ -1717,6 +1733,13 @@ function openDrawer(l){
   if(initialUasg && $("#uasg-txt")) $("#uasg-txt").textContent = initialUasg;
   $("#ovl").addEventListener("click",closeDrawer);
   $("#drw-close").addEventListener("click",closeDrawer);
+  const drwRmBtn = $("#drw-rm-btn");
+  if(drwRmBtn){
+    drwRmBtn.addEventListener("click", ()=>{
+      removeSavedItem(l.id);
+      closeDrawer();
+    });
+  }
   $("#drw-fav").addEventListener("click",()=>{
     const wasFav = favIds().has(l.id);
     toggleFavorite(l);
@@ -1927,6 +1950,43 @@ async function clearAllSaved(){
   toast(count + " licitação(ões) salva(s) removida(s).");
   renderHeader();
   renderGrid();
+}
+
+
+/* ---------- remover licitação salva com atualização síncrona ---------- */
+function removeSavedItem(id){
+  const targetId = String(id);
+  // 1. Remove da memória local imediatamente
+  favorites = favorites.filter(f => String(f.id) !== targetId);
+  persist("radar:favorites", favorites);
+  updateFavoritesCount();
+
+  // 2. Remove imediatamente do DOM se o card existir na tela
+  const card = document.querySelector('.card[data-id="' + CSS.escape(targetId) + '"]');
+  if(card){
+    card.remove();
+  }
+
+  // 3. Atualiza os cabeçalhos e contadores síncronos
+  renderHeader();
+  updateFavoritesCount();
+
+  // 4. Se não sobrou nenhum card na tela e estamos na aba de salvas, renderiza o estado vazio
+  if(currentView === "saved" && favorites.length === 0){
+    renderGrid();
+  }
+
+  toast("Licitação removida com sucesso!");
+
+  // 5. Deleta em segundo plano no Supabase
+  const sb = getSupabase();
+  if(currentUser && sb){
+    sb.from("licitacoes_salvas")
+      .delete()
+      .eq("user_id", currentUser.id)
+      .eq("numero_controle_pncp", targetId)
+      .catch(()=>{});
+  }
 }
 
 /* ---------- favoritos & persistência Supabase ---------- */
