@@ -41,6 +41,7 @@ interface FavoriteRow {
 export function RadarApp() {
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
+  const [showAll, setShowAll] = useState(false);
   const [result, setResult] = useState<SearchResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +64,7 @@ export function RadarApp() {
   }, []);
 
   /* ---------- busca ---------- */
-  const runSearch = useCallback(async (f: FilterState, p: number) => {
+  const runSearch = useCallback(async (f: FilterState, p: number, all: boolean) => {
     setLoading(true);
     setError(null);
     const sp = new URLSearchParams();
@@ -78,12 +79,13 @@ export function RadarApp() {
     if (f.valorMax) sp.set("valorMax", f.valorMax);
     sp.set("sort", f.sort);
     sp.set("page", String(p));
+    if (all) sp.set("all", "true");
 
     try {
       const res = await fetch(`/api/licitacoes?${sp}`);
       if (!res.ok) throw new Error();
       const data = (await res.json()) as SearchResult;
-      setResult(data);
+      setResult(all ? { ...data, totalPages: 1, page: 1, pageSize: data.items.length } : data);
     } catch {
       setError("Não foi possível consultar a fonte de dados agora. Tente novamente em instantes.");
     } finally {
@@ -95,14 +97,21 @@ export function RadarApp() {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     const delay = firstRun.current ? 0 : 450;
     firstRun.current = false;
-    debounceRef.current = setTimeout(() => runSearch(filters, page), delay);
+    debounceRef.current = setTimeout(() => runSearch(filters, page, showAll), delay);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [filters, page, runSearch]);
+  }, [filters, page, showAll, runSearch]);
 
   const changeFilters = (f: FilterState) => {
     setFilters(f);
+    setShowAll(false);
+    setPage(1);
+  };
+
+  const handleShowAll = () => {
+    setFilters(EMPTY_FILTERS);
+    setShowAll(true);
     setPage(1);
   };
 
@@ -236,11 +245,51 @@ export function RadarApp() {
             facets={facets}
             onChange={changeFilters}
             onReset={() => changeFilters(EMPTY_FILTERS)}
+            onShowAll={handleShowAll}
             onSaveSearch={() => setSaveOpen(true)}
           />
         </div>
 
         <div ref={resultsRef} className="mt-8 scroll-mt-56">
+          {/* Barra de pesquisa, ordenação e mostrar todos os resultados (fora do filtro) */}
+          <div className="glass mb-4 flex flex-wrap items-center gap-3 rounded-2xl p-3.5 shadow-xl shadow-black/30 sm:p-4">
+            <div className="relative min-w-[260px] flex-1">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-fog" />
+              <input
+                value={filters.q}
+                onChange={(e) => changeFilters({ ...filters, q: e.target.value })}
+                placeholder="Buscar por objeto, Itens, órgão ou palavra-chave… ex.: uniformes, ambulância, prefeitura"
+                className="h-11 w-full rounded-xl border border-line bg-ink-2/80 pl-10 pr-3.5 text-sm text-white placeholder:text-fog/55 transition-colors focus:border-signal/50"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-fog">
+                <ArrowUpDown className="h-3.5 w-3.5 text-signal" />
+                Ordenar por
+              </span>
+              <select
+                value={filters.sort}
+                onChange={(e) => changeFilters({ ...filters, sort: e.target.value as FilterState["sort"] })}
+                className="h-11 appearance-none rounded-xl border border-line bg-panel-2/90 px-3 text-sm text-mist transition-colors focus:border-signal/50"
+              >
+                <option value="encerramento_asc">Encerramento mais próximo</option>
+                <option value="encerramento_desc">Encerramento mais distante</option>
+                <option value="publicacao_desc">Publicação mais recente</option>
+                <option value="valor_desc">Maior valor estimado</option>
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleShowAll}
+              className="flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-signal/50 bg-signal/15 px-4 text-sm font-semibold text-lime-200 transition-colors hover:bg-signal/25"
+            >
+              <Layers className="h-4 w-4" />
+              Mostrar todos os resultados
+            </button>
+          </div>
+
           <ResultHeader result={result} loading={loading} onExport={exportCsv} />
           <ResultList
             result={result}

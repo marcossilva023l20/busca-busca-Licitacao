@@ -1981,11 +1981,17 @@ async function toggleFavorite(l){
     }
   }
 
-  if(currentView === "saved"){
-    renderHeader();
-    renderGrid();
-  } else {
-    renderGrid();
+  // Atualiza imediatamente cabeçalho, contadores e o grid de licitações salvas
+  renderHeader();
+  renderGrid();
+  updateFavoritesCount();
+
+  // Se a janela lateral de detalhes estiver aberta, sincroniza o botão Salvo/Favoritar
+  const drwFav = $("#drw-fav");
+  if(drwFav){
+    const nowFav = favIds().has(l.id);
+    drwFav.classList.toggle("on", nowFav);
+    drwFav.innerHTML = I.heart + (nowFav ? "Salvo" : "Favoritar");
   }
 }
 function openFavoritesModal(){
@@ -2005,7 +2011,12 @@ function openFavoritesModal(){
   const close=()=>{ root.innerHTML=""; };
   $("#mov").addEventListener("click",close);
   $("#mclose").addEventListener("click",close);
-  body.querySelectorAll(".trash").forEach(b=>b.addEventListener("click",()=>{ favorites=favorites.filter(f=>f.id!==b.dataset.rm); persist("radar:favorites",favorites); $("#fav-count").textContent=String(favorites.length); renderGrid(); openFavoritesModal(); }));
+  body.querySelectorAll(".trash").forEach(b=>b.addEventListener("click",()=>{
+    const rmId = b.dataset.rm;
+    const lObj = favorites.find(f=>f.id === rmId) || {id: rmId};
+    toggleFavorite(lObj);
+    openFavoritesModal();
+  }));
   body.querySelectorAll(".open").forEach(b=>b.addEventListener("click",()=>{
     const f=favorites.find(x=>x.id===b.dataset.id); close();
     if(f) openDrawer({id:f.id,titulo:f.titulo,resumo:null,orgao:f.orgao,uf:f.uf,municipio:f.municipio,modalidadeId:null,modalidadeNome:f.modalidadeNome,modoDisputa:null,portalKey:null,portalNome:f.portalNome,status:null,srp:false,orcamentoSigiloso:false,valorEstimado:null,dataAbertura:null,dataPublicacao:null,dataEncerramento:f.dataEncerramento,linkPncp:f.linkPncp,linkSistemaOrigem:f.linkSistemaOrigem,slug:null,esfera:null,quantidadeItens:null});

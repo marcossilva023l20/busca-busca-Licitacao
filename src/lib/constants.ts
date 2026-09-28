@@ -48,10 +48,11 @@ export const PORTAL_COR: Record<string, string> = Object.fromEntries(
 /** Presets de prazo de encerramento (em dias a partir de hoje). */
 export const PRESETS_PRAZO = [
   { label: "Hoje", dias: 0 },
+  { label: "Amanhã", dias: 1 },
   { label: "48h", dias: 2 },
   { label: "7 dias", dias: 7 },
   { label: "15 dias", dias: 15 },
   { label: "30 dias", dias: 30 },
 ] as const;
 
-export const PAGE_SIZE = 24;
+export const PAGE_SIZE = 1;
